@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import { Project, BranchInfo, LogEntry } from '../types'
+import { Ticket, TicketBranchLink } from '@branch-manager/shared'
 
 type ViewMode = 'project' | 'branch'
+type MainView = 'ticket' | 'branch' | 'workflow'
 
 interface AppState {
   projects: Project[]
@@ -11,6 +13,10 @@ interface AppState {
   selectedBranches: Record<string, string[]> // projectId -> branchNames[]
   selectedPublicBranches: string[]
   viewMode: ViewMode
+  mainView: MainView
+  tickets: Ticket[]
+  selectedTicketId: string | null
+  ticketBranchesMap: Record<string, TicketBranchLink[]>
   logs: LogEntry[]
   loadingBranches: boolean
   setProjects: (projects: Project[]) => void
@@ -24,6 +30,10 @@ interface AppState {
   togglePublicBranchSelection: (branchName: string) => void
   clearPublicBranchSelection: () => void
   setViewMode: (mode: ViewMode) => void
+  setMainView: (mode: MainView) => void
+  setTickets: (tickets: Ticket[]) => void
+  selectTicket: (id: string | null) => void
+  setTicketBranches: (ticketId: string, links: TicketBranchLink[]) => void
   addLog: (log: LogEntry) => void
   clearLogs: () => void
   setLoadingBranches: (loading: boolean) => void
@@ -37,6 +47,10 @@ export const useStore = create<AppState>((set) => ({
   selectedBranches: {},
   selectedPublicBranches: [],
   viewMode: 'project',
+  mainView: 'branch',
+  tickets: [],
+  selectedTicketId: null,
+  ticketBranchesMap: {},
   logs: [],
   loadingBranches: false,
   setProjects: (projects) => set({ projects }),
@@ -64,6 +78,12 @@ export const useStore = create<AppState>((set) => ({
   })),
   clearPublicBranchSelection: () => set({ selectedPublicBranches: [] }),
   setViewMode: (mode) => set({ viewMode: mode }),
+  setMainView: (mode) => set({ mainView: mode }),
+  setTickets: (tickets) => set({ tickets }),
+  selectTicket: (id) => set({ selectedTicketId: id }),
+  setTicketBranches: (ticketId, links) => set((state) => ({
+    ticketBranchesMap: { ...state.ticketBranchesMap, [ticketId]: links }
+  })),
   addLog: (log) => set((state) => ({ logs: [log, ...state.logs] })),
   clearLogs: () => set({ logs: [] }),
   setLoadingBranches: (loading) => set({ loadingBranches: loading })

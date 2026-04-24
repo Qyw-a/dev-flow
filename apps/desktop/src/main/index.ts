@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron'
 import path from 'path'
 import { registerProjectIpc } from './ipc/project'
 import { registerGitIpc } from './ipc/git'
+import { registerTicketIpc } from './ipc/ticket'
 
 function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
@@ -39,6 +40,7 @@ function createWindow(): BrowserWindow {
 app.whenReady().then(() => {
   registerProjectIpc()
   registerGitIpc()
+  registerTicketIpc()
   createWindow()
 
   app.on('activate', () => {

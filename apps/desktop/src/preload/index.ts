@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { Project } from '@branch-manager/shared'
+import { Project, Ticket, TicketBranchLink } from '@branch-manager/shared'
 import { BranchInfo, GitResult, BatchOp } from '@branch-manager/git-core'
 
 const api = {
@@ -28,6 +28,15 @@ const api = {
     pull: (projectId: string): Promise<GitResult> =>
       ipcRenderer.invoke('git:pull', projectId),
     batch: (ops: BatchOp[]): Promise<GitResult[]> => ipcRenderer.invoke('git:batch', ops)
+  },
+  ticket: {
+    list: (): Promise<Ticket[]> => ipcRenderer.invoke('ticket:list'),
+    create: (ticket: Omit<Ticket, 'id' | 'createdAt'>): Promise<Ticket> => ipcRenderer.invoke('ticket:create', ticket),
+    update: (id: string, updates: Partial<Omit<Ticket, 'id' | 'createdAt'>>): Promise<Ticket | null> => ipcRenderer.invoke('ticket:update', id, updates),
+    remove: (id: string): Promise<void> => ipcRenderer.invoke('ticket:remove', id),
+    listBranches: (ticketId: string): Promise<TicketBranchLink[]> => ipcRenderer.invoke('ticket:listBranches', ticketId),
+    linkBranch: (ticketId: string, projectId: string, branchName: string): Promise<void> => ipcRenderer.invoke('ticket:linkBranch', ticketId, projectId, branchName),
+    unlinkBranch: (ticketId: string, projectId: string, branchName: string): Promise<void> => ipcRenderer.invoke('ticket:unlinkBranch', ticketId, projectId, branchName)
   }
 }
 
