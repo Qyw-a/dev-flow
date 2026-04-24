@@ -8,7 +8,11 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@branch-manager/git-core": ["../git-core/src/index.ts"]
+    }
   },
   "include": ["src/**/*"]
 }
