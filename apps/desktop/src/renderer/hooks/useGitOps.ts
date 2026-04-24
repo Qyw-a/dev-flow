@@ -1,18 +1,19 @@
 import { useCallback } from 'react'
 import { useStore } from '../stores/useStore'
+import { repositories } from '@branch-manager/shared'
 import { GitResult, LogEntry } from '../types'
 
 export function useGitOps() {
   const { setBranches, setRemoteBranches, addLog, projects } = useStore()
 
   const refreshBranches = useCallback(async (projectId: string) => {
-    const branches = await window.api.git.branches(projectId)
+    const branches = await repositories.git.branches(projectId)
     setBranches(projectId, branches)
     return branches
   }, [setBranches])
 
   const refreshRemoteBranches = useCallback(async (projectId: string) => {
-    const branches = await window.api.git.remoteBranches(projectId)
+    const branches = await repositories.git.remoteBranches(projectId)
     setRemoteBranches(projectId, branches)
     return branches
   }, [setRemoteBranches])
@@ -22,7 +23,7 @@ export function useGitOps() {
     for (const p of projects) {
       if (!p.isGitRepo) continue
       try {
-        const branches = await window.api.git.branches(p.id)
+        const branches = await repositories.git.branches(p.id)
         setBranches(p.id, branches)
       } catch (err: any) {
         setBranches(p.id, [])
@@ -35,7 +36,7 @@ export function useGitOps() {
     for (const p of projects) {
       if (!p.isGitRepo) continue
       try {
-        const branches = await window.api.git.remoteBranches(p.id)
+        const branches = await repositories.git.remoteBranches(p.id)
         setRemoteBranches(p.id, branches)
       } catch (err: any) {
         setRemoteBranches(p.id, [])
@@ -56,7 +57,7 @@ export function useGitOps() {
   }, [addLog])
 
   const createBranch = useCallback(async (projectId: string, branchName: string, base?: string) => {
-    const result = await window.api.git.createBranch(projectId, branchName, base)
+    const result = await repositories.git.createBranch(projectId, branchName, base)
     const project = projects.find(p => p.id === projectId)
     logResult(project?.name || projectId, `创建分支 ${branchName}`, result)
     if (result.success) await refreshBranches(projectId)
@@ -64,7 +65,7 @@ export function useGitOps() {
   }, [projects, logResult, refreshBranches])
 
   const mergeBranch = useCallback(async (projectId: string, branchName: string, ff?: boolean) => {
-    const result = await window.api.git.mergeBranch(projectId, branchName, ff)
+    const result = await repositories.git.mergeBranch(projectId, branchName, ff)
     const project = projects.find(p => p.id === projectId)
     logResult(project?.name || projectId, `合并分支 ${branchName}`, result)
     if (result.success) await refreshBranches(projectId)
@@ -72,14 +73,14 @@ export function useGitOps() {
   }, [projects, logResult, refreshBranches])
 
   const pushBranch = useCallback(async (projectId: string, branchName: string) => {
-    const result = await window.api.git.pushBranch(projectId, branchName)
+    const result = await repositories.git.pushBranch(projectId, branchName)
     const project = projects.find(p => p.id === projectId)
     logResult(project?.name || projectId, `推送分支 ${branchName}`, result)
     return result
   }, [projects, logResult])
 
   const deleteBranch = useCallback(async (projectId: string, branchName: string, force?: boolean) => {
-    const result = await window.api.git.deleteBranch(projectId, branchName, force)
+    const result = await repositories.git.deleteBranch(projectId, branchName, force)
     const project = projects.find(p => p.id === projectId)
     logResult(project?.name || projectId, `删除分支 ${branchName}`, result)
     if (result.success) await refreshBranches(projectId)
@@ -87,7 +88,7 @@ export function useGitOps() {
   }, [projects, logResult, refreshBranches])
 
   const checkoutBranch = useCallback(async (projectId: string, branchName: string) => {
-    const result = await window.api.git.checkoutBranch(projectId, branchName)
+    const result = await repositories.git.checkoutBranch(projectId, branchName)
     const project = projects.find(p => p.id === projectId)
     logResult(project?.name || projectId, `切换分支 ${branchName}`, result)
     if (result.success) await refreshBranches(projectId)
@@ -95,7 +96,7 @@ export function useGitOps() {
   }, [projects, logResult, refreshBranches])
 
   const mergeToBranch = useCallback(async (projectId: string, sourceBranch: string, targetBranch: string, ff?: boolean) => {
-    const result = await window.api.git.mergeToBranch(projectId, sourceBranch, targetBranch, ff)
+    const result = await repositories.git.mergeToBranch(projectId, sourceBranch, targetBranch, ff)
     const project = projects.find(p => p.id === projectId)
     logResult(project?.name || projectId, `将 ${sourceBranch} 合并到 ${targetBranch}`, result)
     if (result.success) await refreshBranches(projectId)
@@ -103,7 +104,7 @@ export function useGitOps() {
   }, [projects, logResult, refreshBranches])
 
   const fetchRepo = useCallback(async (projectId: string) => {
-    const result = await window.api.git.fetch(projectId)
+    const result = await repositories.git.fetch(projectId)
     const project = projects.find(p => p.id === projectId)
     logResult(project?.name || projectId, 'fetch', result)
     if (result.success) await refreshBranches(projectId)
@@ -111,7 +112,7 @@ export function useGitOps() {
   }, [projects, logResult, refreshBranches])
 
   const pullRepo = useCallback(async (projectId: string) => {
-    const result = await window.api.git.pull(projectId)
+    const result = await repositories.git.pull(projectId)
     const project = projects.find(p => p.id === projectId)
     logResult(project?.name || projectId, 'pull', result)
     if (result.success) await refreshBranches(projectId)
@@ -119,7 +120,7 @@ export function useGitOps() {
   }, [projects, logResult, refreshBranches])
 
   const batch = useCallback(async (ops: { projectId: string; type: 'create' | 'merge' | 'push' | 'delete' | 'checkout'; branchName: string; base?: string; force?: boolean; ff?: boolean }[]) => {
-    const results = await window.api.git.batch(ops)
+    const results = await repositories.git.batch(ops)
     results.forEach((result, idx) => {
       const op = ops[idx]
       const project = projects.find(p => p.id === op.projectId)

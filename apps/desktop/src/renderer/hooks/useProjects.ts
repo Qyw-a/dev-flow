@@ -1,17 +1,18 @@
 import { useCallback } from 'react'
 import { useStore } from '../stores/useStore'
+import { repositories } from '@branch-manager/shared'
 
 export function useProjects() {
   const { projects, setProjects } = useStore()
 
   const refresh = useCallback(async () => {
-    const list = await window.api.project.list()
+    const list = await repositories.project.list()
     setProjects(list)
     return list
   }, [setProjects])
 
   const add = useCallback(async (path?: string) => {
-    const project = await window.api.project.add(path)
+    const project = await repositories.project.add(path)
     if (project) {
       setProjects([...projects, project])
     }
@@ -19,7 +20,7 @@ export function useProjects() {
   }, [projects, setProjects])
 
   const remove = useCallback(async (id: string) => {
-    await window.api.project.remove(id)
+    await repositories.project.remove(id)
     setProjects(projects.filter(p => p.id !== id))
   }, [projects, setProjects])
 
