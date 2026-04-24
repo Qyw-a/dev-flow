@@ -9,5 +9,12 @@
     "typecheck": "pnpm --filter @branch-manager/desktop typecheck",
     "preview": "pnpm --filter @branch-manager/desktop preview",
     "postinstall": "pnpm --filter @branch-manager/desktop postinstall"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "electron-builder",
+      "esbuild"
+    ]
   }
 }
