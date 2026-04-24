@@ -6,7 +6,7 @@ import { Ticket, WorkflowStep, BizProject } from '@branch-manager/shared'
 import { LogEntry } from '../types'
 
 export function useWorkflowActions() {
-  const { projects, addLog } = useStore()
+  const { projects, addLog, versions } = useStore()
   const { createBranch, mergeToBranch, pushBranch } = useGitOps()
 
   const renderBranchName = useCallback((template: string, ticket: Ticket): string => {
@@ -14,10 +14,26 @@ export function useWorkflowActions() {
       .replace(/[\\/?%*:|"<>\s]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 20)
+    const now = new Date()
+    const yyyy = String(now.getFullYear())
+    const MM = String(now.getMonth() + 1).padStart(2, '0')
+    const dd = String(now.getDate()).padStart(2, '0')
+    const HH = String(now.getHours()).padStart(2, '0')
+    const mm = String(now.getMinutes()).padStart(2, '0')
+    const dateStr = `${yyyy}-${MM}-${dd}`
+    const yyyyMMdd = `${yyyy}${MM}${dd}`
+    const datetimeStr = `${yyyyMMdd}-${HH}${mm}`
+    const timeStr = `${HH}${mm}`
+    const author = window.env?.userName || 'developer'
     return template
       .replace(/{ticketId}/g, ticket.id)
       .replace(/{shortTitle}/g, shortTitle)
       .replace(/{title}/g, ticket.title.slice(0, 40))
+      .replace(/{date}/g, dateStr)
+      .replace(/{yyyyMMdd}/g, yyyyMMdd)
+      .replace(/{datetime}/g, datetimeStr)
+      .replace(/{time}/g, timeStr)
+      .replace(/{author}/g, author)
   }, [])
 
   const createBranchForTicket = useCallback(async (
@@ -119,12 +135,15 @@ export function useWorkflowActions() {
     step: WorkflowStep,
     bizProject: BizProject
   ): Promise<{ success: boolean; message: string }> => {
-    const gitProjectIds = bizProject.gitProjectIds || []
+    // 优先使用 ticket.projectIds，如果没有则回退到 bizProject.gitProjectIds
+    const targetProjectIds = ticket.projectIds && ticket.projectIds.length > 0
+      ? ticket.projectIds
+      : (bizProject.gitProjectIds || [])
 
     for (const action of step.actions) {
       switch (action.type) {
         case 'createBranch': {
-          for (const projectId of gitProjectIds) {
+          for (const projectId of targetProjectIds) {
             const result = await createBranchForTicket(ticket, action.template, action.baseBranch, projectId)
             if (!result.success) {
               return { success: false, message: `创建分支失败: ${result.message}` }
@@ -133,7 +152,15 @@ export function useWorkflowActions() {
           break
         }
         case 'mergeToBranch': {
-          const result = await mergeTicketBranches(ticket, action.targetBranch, gitProjectIds, action.push !== false)
+          let targetBranch = action.targetBranch
+          if (targetBranch.includes('{versionBranch}')) {
+            const version = versions.find(v => v.id === ticket.versionId)
+            if (!version?.versionBranch) {
+              return { success: false, message: '合并失败: 需求未关联版本或版本未配置分支名称，无法解析 {versionBranch}' }
+            }
+            targetBranch = targetBranch.replace(/{versionBranch}/g, version.versionBranch)
+          }
+          const result = await mergeTicketBranches(ticket, targetBranch, targetProjectIds, action.push !== false)
           if (!result.success) {
             return { success: false, message: `合并失败: ${result.message}` }
           }

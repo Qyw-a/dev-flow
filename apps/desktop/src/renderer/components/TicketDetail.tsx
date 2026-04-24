@@ -11,7 +11,8 @@ import {
   MergeCellsOutlined,
   CloudUploadOutlined,
   DeleteOutlined as DeleteIcon,
-  StepForwardOutlined
+  StepForwardOutlined,
+  CheckCircleOutlined
 } from '@ant-design/icons'
 import { useStore } from '../stores/useStore'
 import { useProjects } from '../hooks/useProjects'
@@ -199,17 +200,17 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onEdit }) => {
       key: 'action',
       render: (_: any, record: any) => (
         <Space size="small">
-          <Tooltip title="切换">
-            <Button size="small" icon={<SwapOutlined />} onClick={() => handleCheckout(record.projectId, record.branchName)} />
+          <Tooltip title={ticket.status === 'done' ? '已上线需求不可操作' : '切换'}>
+            <Button size="small" icon={<SwapOutlined />} disabled={ticket.status === 'done'} onClick={() => handleCheckout(record.projectId, record.branchName)} />
           </Tooltip>
-          <Tooltip title="合并">
-            <Button size="small" icon={<MergeCellsOutlined />} onClick={() => handleMerge(record.projectId, record.branchName)} />
+          <Tooltip title={ticket.status === 'done' ? '已上线需求不可操作' : '合并'}>
+            <Button size="small" icon={<MergeCellsOutlined />} disabled={ticket.status === 'done'} onClick={() => handleMerge(record.projectId, record.branchName)} />
           </Tooltip>
-          <Tooltip title="推送">
-            <Button size="small" icon={<CloudUploadOutlined />} onClick={() => handlePush(record.projectId, record.branchName)} />
+          <Tooltip title={ticket.status === 'done' ? '已上线需求不可操作' : '推送'}>
+            <Button size="small" icon={<CloudUploadOutlined />} disabled={ticket.status === 'done'} onClick={() => handlePush(record.projectId, record.branchName)} />
           </Tooltip>
-          <Tooltip title="解绑">
-            <Button size="small" danger icon={<DeleteIcon />} onClick={() => unlinkBranch(ticket.id, record.projectId, record.branchName)} />
+          <Tooltip title={ticket.status === 'done' ? '已上线需求不可操作' : '解绑'}>
+            <Button size="small" danger icon={<DeleteIcon />} disabled={ticket.status === 'done'} onClick={() => unlinkBranch(ticket.id, record.projectId, record.branchName)} />
           </Tooltip>
         </Space>
       )
@@ -240,17 +241,35 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onEdit }) => {
               </Tag>
             </Space>
             <Space>
-              <Button size="small" icon={<EditOutlined />} onClick={onEdit}>编辑</Button>
-              <Popconfirm
-                title="确认删除需求？"
-                description={`删除需求 ${ticket.id}`}
-                okText="删除"
-                cancelText="取消"
-                okButtonProps={{ danger: true }}
-                onConfirm={() => remove(ticket.id)}
-              >
-                <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
-              </Popconfirm>
+              {ticket.status !== 'done' && (
+                <>
+                  <Button size="small" icon={<EditOutlined />} onClick={onEdit}>编辑</Button>
+                  <Popconfirm
+                    title="确认标记为完成？"
+                    description="将需求状态设为已上线"
+                    okText="确认"
+                    cancelText="取消"
+                    onConfirm={async () => {
+                      const updated = await update(ticket.id, { status: 'done' })
+                      if (updated) message.success('已标记为完成')
+                    }}
+                  >
+                    <Button size="small" type="primary" icon={<CheckCircleOutlined />}>完成</Button>
+                  </Popconfirm>
+                </>
+              )}
+              {ticket.status !== 'done' && (
+                <Popconfirm
+                  title="确认删除需求？"
+                  description={`删除需求 ${ticket.id}`}
+                  okText="删除"
+                  cancelText="取消"
+                  okButtonProps={{ danger: true }}
+                  onConfirm={() => remove(ticket.id)}
+                >
+                  <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
+                </Popconfirm>
+              )}
             </Space>
           </div>
         }
@@ -258,9 +277,54 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onEdit }) => {
         <Space direction="vertical" size={8} style={{ width: '100%' }}>
           <div style={{ color: '#888', fontSize: 13 }}>ID: {ticket.id}</div>
           {bizProject && <div style={{ color: '#888', fontSize: 13 }}>业务项目: <Tag color="cyan">{bizProject.name}</Tag></div>}
-          {version && <div style={{ color: '#888', fontSize: 13 }}>版本: <Tag color="purple">{version.name}</Tag></div>}
+          {ticket.bizProjectId && (
+            <div style={{ color: '#888', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span>版本:</span>
+              {version && (
+                <>
+                  <Tag color="purple">{version.name}</Tag>
+                  {version.versionBranch && <Tag color="blue">{version.versionBranch}</Tag>}
+                </>
+              )}
+              <Select
+                size="small"
+                style={{ width: 160 }}
+                placeholder={ticket.status === 'done' ? '已上线不可移动' : '移动到版本'}
+                allowClear
+                disabled={ticket.status === 'done'}
+                value={ticket.versionId}
+                onChange={async (newVersionId) => {
+                  const hide = message.loading('正在移动版本...', 0)
+                  try {
+                    const updated = await update(ticket.id, { versionId: newVersionId || undefined })
+                    if (updated) {
+                      message.success(newVersionId ? '已移动到指定版本' : '已移出版本')
+                    } else {
+                      message.error('移动失败')
+                    }
+                  } finally {
+                    hide()
+                  }
+                }}
+                options={versions.filter(v => v.bizProjectId === ticket.bizProjectId).map(v => ({ label: v.name, value: v.id }))}
+              />
+            </div>
+          )}
           <div style={{ color: '#888', fontSize: 13 }}>创建时间: {new Date(ticket.createdAt).toLocaleString()}</div>
           <div>{ticket.description || '暂无描述'}</div>
+
+          {/* 关联项目 */}
+          {ticket.projectIds && ticket.projectIds.length > 0 && (
+            <div style={{ marginTop: 4 }}>
+              <span style={{ color: '#888', fontSize: 13 }}>关联项目: </span>
+              <Space size={4} wrap>
+                {ticket.projectIds.map(pid => {
+                  const project = projects.find(p => p.id === pid)
+                  return <Tag key={pid} color="blue">{project?.name || pid}</Tag>
+                })}
+              </Space>
+            </div>
+          )}
 
           {/* 工作流流转按钮 */}
           {nextSteps.length > 0 && (
@@ -297,57 +361,61 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onEdit }) => {
           <Table size="small" columns={columns} dataSource={dataSource} pagination={false} />
         )}
 
-        <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-          <Select
-            placeholder="选择项目"
-            value={linkProjectId || undefined}
-            onChange={(v) => { setLinkProjectId(v); setLinkBranchName('') }}
-            style={{ width: 180 }}
-            options={availableProjects.map(p => ({ label: p.name, value: p.id }))}
-          />
-          <Select
-            placeholder="选择分支"
-            value={linkBranchName || undefined}
-            onChange={(v) => setLinkBranchName(v)}
-            style={{ width: 180 }}
-            options={availableBranches.map(n => ({ label: n, value: n }))}
-            disabled={!linkProjectId}
-          />
-          <Button type="primary" icon={<LinkOutlined />} onClick={handleLink} disabled={!linkProjectId || !linkBranchName}>
-            关联
-          </Button>
-        </div>
+        {ticket.status !== 'done' && (
+          <>
+            <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+              <Select
+                placeholder="选择项目"
+                value={linkProjectId || undefined}
+                onChange={(v) => { setLinkProjectId(v); setLinkBranchName('') }}
+                style={{ width: 180 }}
+                options={availableProjects.map(p => ({ label: p.name, value: p.id }))}
+              />
+              <Select
+                placeholder="选择分支"
+                value={linkBranchName || undefined}
+                onChange={(v) => setLinkBranchName(v)}
+                style={{ width: 180 }}
+                options={availableBranches.map(n => ({ label: n, value: n }))}
+                disabled={!linkProjectId}
+              />
+              <Button type="primary" icon={<LinkOutlined />} onClick={handleLink} disabled={!linkProjectId || !linkBranchName}>
+                关联
+              </Button>
+            </div>
 
-        <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px dashed #f0f0f0' }}>
-          <div style={{ marginBottom: 8, fontWeight: 500 }}>创建并关联新分支</div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Select
-              placeholder="选择项目"
-              value={createProjectId || undefined}
-              onChange={(v) => { setCreateProjectId(v); setCreateBaseBranch(''); setNewBranchName('') }}
-              style={{ width: 160 }}
-              options={createAvailableProjects.map(p => ({ label: p.name, value: p.id }))}
-            />
-            <Select
-              placeholder="基于分支（可选）"
-              value={createBaseBranch || undefined}
-              onChange={(v) => setCreateBaseBranch(v)}
-              style={{ width: 160 }}
-              options={createAvailableBranches.map(n => ({ label: n, value: n }))}
-              disabled={!createProjectId}
-              allowClear
-            />
-            <input
-              placeholder="新分支名称"
-              value={newBranchName}
-              onChange={(e) => setNewBranchName(e.target.value)}
-              style={{ width: 160, padding: '4px 8px', border: '1px solid #d9d9d9', borderRadius: 4 }}
-            />
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateAndLink} disabled={!createProjectId || !newBranchName.trim()}>
-              创建并关联
-            </Button>
-          </div>
-        </div>
+            <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px dashed #f0f0f0' }}>
+              <div style={{ marginBottom: 8, fontWeight: 500 }}>创建并关联新分支</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Select
+                  placeholder="选择项目"
+                  value={createProjectId || undefined}
+                  onChange={(v) => { setCreateProjectId(v); setCreateBaseBranch(''); setNewBranchName('') }}
+                  style={{ width: 160 }}
+                  options={createAvailableProjects.map(p => ({ label: p.name, value: p.id }))}
+                />
+                <Select
+                  placeholder="基于分支（可选）"
+                  value={createBaseBranch || undefined}
+                  onChange={(v) => setCreateBaseBranch(v)}
+                  style={{ width: 160 }}
+                  options={createAvailableBranches.map(n => ({ label: n, value: n }))}
+                  disabled={!createProjectId}
+                  allowClear
+                />
+                <input
+                  placeholder="新分支名称"
+                  value={newBranchName}
+                  onChange={(e) => setNewBranchName(e.target.value)}
+                  style={{ width: 160, padding: '4px 8px', border: '1px solid #d9d9d9', borderRadius: 4 }}
+                />
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateAndLink} disabled={!createProjectId || !newBranchName.trim()}>
+                  创建并关联
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </Card>
     </div>
   )

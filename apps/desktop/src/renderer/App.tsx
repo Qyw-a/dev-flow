@@ -3,6 +3,7 @@ import { Layout, message, Modal, Input } from 'antd'
 import AppHeader from './components/AppHeader'
 import BranchManagerView from './components/BranchManagerView'
 import WorkflowView from './components/WorkflowView'
+import ArchiveView from './components/ArchiveView'
 import TicketList from './components/TicketList'
 import TicketDetail from './components/TicketDetail'
 import TicketCreateModal from './components/TicketCreateModal'
@@ -19,9 +20,9 @@ import { Ticket } from '@branch-manager/shared'
 const { Sider, Content } = Layout
 
 const TicketView: React.FC = () => {
-  const { tickets, selectedTicketId, selectTicket, selectedBizProjectId, versions, bizProjects, selectBizProject } = useStore()
+  const { tickets, selectedTicketId, selectTicket, selectedBizProjectId, versions, bizProjects, selectBizProject, projects } = useStore()
   const { create, update } = useTickets()
-  const { create: createVersion } = useVersions()
+  const { create: createVersion, update: updateVersion } = useVersions()
   const { create: createBizProject, remove: removeBizProject } = useBizProjects()
   const { getByBizProjectId } = useWorkflowConfigs()
   const { createBranchForTicket } = useWorkflowActions()
@@ -29,6 +30,7 @@ const TicketView: React.FC = () => {
   const [versionModalOpen, setVersionModalOpen] = useState(false)
   const [bizProjectModalOpen, setBizProjectModalOpen] = useState(false)
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null)
+  const [editingVersion, setEditingVersion] = useState<import('@branch-manager/shared').Version | null>(null)
   const [createTicketVersionId, setCreateTicketVersionId] = useState<string | undefined>(undefined)
   const [newBizProjectName, setNewBizProjectName] = useState('')
   const [newBizProjectDesc, setNewBizProjectDesc] = useState('')
@@ -44,6 +46,13 @@ const TicketView: React.FC = () => {
 
   const handleCreateVersionForProject = (bizProjectId: string) => {
     selectBizProject(bizProjectId)
+    setEditingVersion(null)
+    setVersionModalOpen(true)
+  }
+
+  const handleEditVersion = (versionId: string) => {
+    const version = versions.find(v => v.id === versionId) || null
+    setEditingVersion(version)
     setVersionModalOpen(true)
   }
 
@@ -56,6 +65,10 @@ const TicketView: React.FC = () => {
 
   const handleEdit = () => {
     if (selectedTicket) {
+      if (selectedTicket.status === 'done') {
+        message.warning('已上线需求禁止编辑')
+        return
+      }
       setEditingTicket(selectedTicket)
       setModalOpen(true)
     }
@@ -77,12 +90,13 @@ const TicketView: React.FC = () => {
           const firstStep = [...wfConfig.steps].sort((a, b) => a.order - b.order)[0]
           const createAction = firstStep?.actions.find(a => a.type === 'createBranch')
           if (createAction && createAction.type === 'createBranch') {
-            const bizProject = bizProjects.find(b => b.id === created.bizProjectId)
-            const gitProjectIds = bizProject?.gitProjectIds || []
-            if (gitProjectIds.length > 0) {
+            const targetProjectIds = created.projectIds && created.projectIds.length > 0
+              ? created.projectIds
+              : (bizProjects.find(b => b.id === created.bizProjectId)?.gitProjectIds || [])
+            if (targetProjectIds.length > 0) {
               const hide = message.loading('正在自动创建分支...', 0)
               let createdCount = 0
-              for (const projectId of gitProjectIds) {
+              for (const projectId of targetProjectIds) {
                 const result = await createBranchForTicket(created, createAction.template, createAction.baseBranch, projectId)
                 if (result.success) {
                   createdCount++
@@ -104,12 +118,18 @@ const TicketView: React.FC = () => {
 
   const handleVersionConfirm = async (values: Omit<import('@branch-manager/shared').Version, 'id' | 'createdAt'>) => {
     try {
-      await createVersion(values)
-      message.success('版本创建成功')
+      if (editingVersion) {
+        const updated = await updateVersion(editingVersion.id, values)
+        if (updated) message.success('版本更新成功')
+      } else {
+        await createVersion(values)
+        message.success('版本创建成功')
+      }
     } catch (err: any) {
-      message.error('创建失败: ' + (err.message || String(err)))
+      message.error('保存失败: ' + (err.message || String(err)))
     } finally {
       setVersionModalOpen(false)
+      setEditingVersion(null)
     }
   }
 
@@ -144,6 +164,7 @@ const TicketView: React.FC = () => {
           onCreateTicketForProject={handleCreateForProject}
           onCreateVersionForProject={handleCreateVersionForProject}
           onCreateTicketForVersion={handleCreateTicketForVersion}
+          onEditVersion={handleEditVersion}
         />
       </Sider>
       <Content style={{ padding: 16, overflow: 'auto' }}>
@@ -162,14 +183,15 @@ const TicketView: React.FC = () => {
         defaultVersionId={createTicketVersionId}
         bizProjects={bizProjects}
         versions={versions}
+        projects={projects}
         onCancel={() => { setModalOpen(false); setCreateTicketVersionId(undefined) }}
         onConfirm={handleConfirm}
       />
       <VersionCreateModal
         open={versionModalOpen}
-        version={null}
-        bizProjectId={selectedBizProjectId || ''}
-        onCancel={() => setVersionModalOpen(false)}
+        version={editingVersion}
+        bizProjectId={editingVersion?.bizProjectId || selectedBizProjectId || ''}
+        onCancel={() => { setVersionModalOpen(false); setEditingVersion(null) }}
         onConfirm={handleVersionConfirm}
       />
       <Modal
@@ -226,6 +248,7 @@ const App: React.FC = () => {
         {mainView === 'branch' && <BranchManagerView />}
         {mainView === 'ticket' && <TicketView />}
         {mainView === 'workflow' && <WorkflowView />}
+        {mainView === 'archive' && <ArchiveView />}
       </Content>
     </Layout>
   )

@@ -10,7 +10,8 @@ const AppHeader: React.FC = () => {
   const items = [
     { key: 'ticket', label: '需求管理' },
     { key: 'branch', label: '分支管理' },
-    { key: 'workflow', label: '工作流配置' }
+    { key: 'workflow', label: '工作流配置' },
+    { key: 'archive', label: '归档历史' }
   ]
 
   return (

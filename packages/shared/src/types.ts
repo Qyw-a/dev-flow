@@ -24,6 +24,8 @@ export interface Version {
   description: string
   status: VersionStatus
   plannedDate?: string
+  versionBranch?: string
+  archived?: boolean
   createdAt: string
 }
 
@@ -35,6 +37,7 @@ export interface Ticket {
   status: string
   priority: TicketPriority
   versionId?: string
+  projectIds?: string[]
   createdAt: string
 }
 

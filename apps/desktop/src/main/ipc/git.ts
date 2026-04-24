@@ -54,6 +54,13 @@ export function registerGitIpc(): void {
     return GitService.deleteRemoteBranch(project.path, branchName)
   })
 
+  ipcMain.handle('git:renameBranch', async (_, projectId: string, oldName: string, newName: string) => {
+    const projects = ProjectService.list()
+    const project = projects.find(p => p.id === projectId)
+    if (!project) throw new Error('项目未找到')
+    return GitService.renameBranch(project.path, oldName, newName)
+  })
+
   ipcMain.handle('git:checkoutBranch', async (_, projectId: string, branchName: string) => {
     const projects = ProjectService.list()
     const project = projects.find(p => p.id === projectId)

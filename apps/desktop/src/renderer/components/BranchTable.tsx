@@ -7,7 +7,8 @@ import {
   DeleteOutlined,
   ReloadOutlined,
   BranchesOutlined,
-  SwapOutlined
+  SwapOutlined,
+  EditOutlined
 } from '@ant-design/icons'
 import { useStore } from '../stores/useStore'
 import { useProjects } from '../hooks/useProjects'
@@ -28,7 +29,7 @@ const BranchTable: React.FC = () => {
     selectedBranches,
     setProjectSelectedBranches
   } = useStore()
-  const { refreshBranches, refreshRemoteBranches, createBranch, mergeBranch, pushBranch, deleteBranch, deleteRemoteBranch, checkoutBranch } = useGitOps()
+  const { refreshBranches, refreshRemoteBranches, createBranch, mergeBranch, pushBranch, deleteBranch, deleteRemoteBranch, renameBranch, checkoutBranch } = useGitOps()
 
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [createProjectId, setCreateProjectId] = useState('')
@@ -39,6 +40,11 @@ const BranchTable: React.FC = () => {
   const [deleteRemoteProjectId, setDeleteRemoteProjectId] = useState('')
   const [deleteRemoteBranchName, setDeleteRemoteBranchName] = useState('')
   const [deleteWithLocal, setDeleteWithLocal] = useState(false)
+
+  const [renameModalOpen, setRenameModalOpen] = useState(false)
+  const [renameProjectId, setRenameProjectId] = useState('')
+  const [renameOldName, setRenameOldName] = useState('')
+  const [renameNewName, setRenameNewName] = useState('')
 
   const selectedProjects = projects.filter(p => selectedProjectIds.includes(p.id))
 
@@ -154,6 +160,32 @@ const BranchTable: React.FC = () => {
     }
   }
 
+  const openRenameModal = (projectId: string, oldName: string) => {
+    setRenameProjectId(projectId)
+    setRenameOldName(oldName)
+    setRenameNewName(oldName)
+    setRenameModalOpen(true)
+  }
+
+  const handleRenameConfirm = async () => {
+    const name = renameNewName.trim()
+    if (!name) {
+      message.warning('请输入新分支名称')
+      return
+    }
+    if (name === renameOldName) {
+      setRenameModalOpen(false)
+      return
+    }
+    setRenameModalOpen(false)
+    const hide = message.loading('正在重命名分支...', 0)
+    try {
+      await renameBranch(renameProjectId, renameOldName, name)
+    } finally {
+      hide()
+    }
+  }
+
   if (selectedProjects.length === 0) {
     return (
       <div style={{ textAlign: 'center', paddingTop: 60, color: '#888' }}>
@@ -234,7 +266,7 @@ const BranchTable: React.FC = () => {
                                   )}
                                   {record.current && <Tag color="cyan">当前</Tag>}
                                   {hasRemote ? (
-                                    <Tag color="success" style={{ fontSize: 11 }}>已同步</Tag>
+                                    <Tag color="success" style={{ fontSize: 11 }}>{`origin/${record.name}`}</Tag>
                                   ) : (
                                     <Tag color="warning" style={{ fontSize: 11 }}>未推送</Tag>
                                   )}
@@ -293,6 +325,13 @@ const BranchTable: React.FC = () => {
                                       size="small"
                                       icon={<CloudUploadOutlined />}
                                       onClick={() => handlePush(pid, bname)}
+                                    />
+                                  </Tooltip>
+                                  <Tooltip title="重命名">
+                                    <Button
+                                      size="small"
+                                      icon={<EditOutlined />}
+                                      onClick={() => openRenameModal(pid, bname)}
                                     />
                                   </Tooltip>
                                   <Popconfirm
@@ -434,6 +473,28 @@ const BranchTable: React.FC = () => {
           >
             同时删除同名本地分支
           </Checkbox>
+        </div>
+      </Modal>
+
+      <Modal
+        title="重命名分支"
+        open={renameModalOpen}
+        onOk={handleRenameConfirm}
+        onCancel={() => setRenameModalOpen(false)}
+        okText="确认"
+        cancelText="取消"
+      >
+        <div style={{ marginTop: 8 }}>
+          <div style={{ marginBottom: 8 }}>
+            原分支名：<Tag>{renameOldName}</Tag>
+          </div>
+          <Input
+            placeholder="请输入新分支名称"
+            value={renameNewName}
+            onChange={(e) => setRenameNewName(e.target.value)}
+            onPressEnter={handleRenameConfirm}
+            autoFocus
+          />
         </div>
       </Modal>
     </>

@@ -44,6 +44,7 @@ export interface GitRepository {
   pushBranch(projectId: string, branchName: string): Promise<GitResult>
   deleteBranch(projectId: string, branchName: string, force?: boolean): Promise<GitResult>
   deleteRemoteBranch(projectId: string, branchName: string): Promise<GitResult>
+  renameBranch(projectId: string, oldName: string, newName: string): Promise<GitResult>
   checkoutBranch(projectId: string, branchName: string): Promise<GitResult>
   mergeToBranch(projectId: string, sourceBranch: string, targetBranch: string, ff?: boolean): Promise<GitResult>
   fetch(projectId: string): Promise<GitResult>

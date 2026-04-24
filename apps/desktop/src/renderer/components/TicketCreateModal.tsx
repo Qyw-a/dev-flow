@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { Modal, Input, Select, message } from 'antd'
-import { Ticket, TicketPriority, BizProject } from '@branch-manager/shared'
+import React, { useState, useEffect, useMemo } from 'react'
+import { Modal, Input, Select, message, Divider, Empty } from 'antd'
+import { Ticket, TicketPriority, BizProject, Project } from '@branch-manager/shared'
 import { useWorkflowConfigs } from '../hooks/useWorkflowConfigs'
 
 interface Props {
@@ -10,11 +10,12 @@ interface Props {
   defaultVersionId?: string
   bizProjects: BizProject[]
   versions: import('@branch-manager/shared').Version[]
+  projects: Project[]
   onCancel: () => void
   onConfirm: (values: Omit<Ticket, 'id' | 'createdAt'>) => void
 }
 
-const TicketCreateModal: React.FC<Props> = ({ open, ticket, bizProjectId, defaultVersionId, bizProjects, versions, onCancel, onConfirm }) => {
+const TicketCreateModal: React.FC<Props> = ({ open, ticket, bizProjectId, defaultVersionId, bizProjects, versions, projects, onCancel, onConfirm }) => {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<string>('todo')
@@ -22,8 +23,14 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, bizProjectId, defaul
   const [versionId, setVersionId] = useState<string | undefined>(undefined)
   const [selectedBizProjectId, setSelectedBizProjectId] = useState<string>(bizProjectId)
   const [statusOptions, setStatusOptions] = useState<{ label: string; value: string }[]>([])
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([])
   const isEdit = !!ticket
   const { getByBizProjectId } = useWorkflowConfigs()
+
+  // 所有已添加的 Git 项目
+  const gitProjects = useMemo(() => {
+    return projects.filter(p => p.isGitRepo)
+  }, [projects])
 
   useEffect(() => {
     if (ticket) {
@@ -33,12 +40,14 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, bizProjectId, defaul
       setPriority(ticket.priority)
       setVersionId(ticket.versionId)
       setSelectedBizProjectId(ticket.bizProjectId)
+      setSelectedProjectIds(ticket.projectIds || [])
     } else {
       setTitle('')
       setDescription('')
       setPriority('medium')
       setVersionId(defaultVersionId)
       setSelectedBizProjectId(bizProjectId)
+      setSelectedProjectIds([])
     }
   }, [ticket, open, bizProjectId, defaultVersionId])
 
@@ -64,16 +73,19 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, bizProjectId, defaul
       message.warning('请选择业务项目')
       return
     }
+
     onConfirm({
       title: t,
       description: description.trim(),
       status,
       priority,
       versionId: versionId || undefined,
-      bizProjectId: selectedBizProjectId
+      bizProjectId: selectedBizProjectId,
+      projectIds: selectedProjectIds.length > 0 ? selectedProjectIds : undefined
     })
     setTitle('')
     setDescription('')
+    setSelectedProjectIds([])
   }
 
   const filteredVersions = versions.filter(v => v.bizProjectId === selectedBizProjectId)
@@ -92,7 +104,7 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, bizProjectId, defaul
           <label style={{ display: 'block', marginBottom: 4 }}>业务项目：</label>
           <Select
             value={selectedBizProjectId || undefined}
-            onChange={(v) => { setSelectedBizProjectId(v); setVersionId(undefined) }}
+            onChange={(v) => { setSelectedBizProjectId(v); setVersionId(undefined); setSelectedProjectIds([]) }}
             style={{ width: '100%' }}
             options={bizProjects.map(b => ({ label: b.name, value: b.id }))}
           />
@@ -149,6 +161,24 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, bizProjectId, defaul
             allowClear
             options={filteredVersions.map(v => ({ label: v.name, value: v.id }))}
           />
+        </div>
+
+        {/* 关联项目 */}
+        <Divider style={{ margin: '8px 0' }} />
+        <div>
+          <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>关联项目：</label>
+          {gitProjects.length === 0 ? (
+            <Empty description="暂无 Git 项目" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ margin: '8px 0' }} />
+          ) : (
+            <Select
+              mode="multiple"
+              placeholder="选择要关联的 Git 项目"
+              value={selectedProjectIds}
+              onChange={(v) => setSelectedProjectIds(v)}
+              style={{ width: '100%' }}
+              options={gitProjects.map((p: Project) => ({ label: p.name, value: p.id }))}
+            />
+          )}
         </div>
       </div>
     </Modal>

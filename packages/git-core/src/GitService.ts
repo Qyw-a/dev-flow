@@ -110,6 +110,16 @@ export class GitService {
     }
   }
 
+  static async renameBranch(projectPath: string, oldName: string, newName: string): Promise<GitResult> {
+    const git = getGit(projectPath)
+    try {
+      await git.branch(['-m', oldName, newName])
+      return { success: true, message: `分支 ${oldName} 已重命名为 ${newName}`, projectId: '' }
+    } catch (err: any) {
+      return { success: false, message: err.message || String(err), projectId: '' }
+    }
+  }
+
   static async checkoutBranch(projectPath: string, branchName: string): Promise<GitResult> {
     const git = getGit(projectPath)
     try {

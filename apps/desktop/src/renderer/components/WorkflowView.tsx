@@ -272,24 +272,29 @@ const StepEditorCard: React.FC<StepEditorCardProps> = ({ step, index, total, onU
           }}
         >
           {createBranchAction && createBranchAction.type === 'createBranch' && (
-            <Space style={{ marginTop: 8, flexWrap: 'wrap' }}>
-              <span style={{ color: '#888', fontSize: 12 }}>分支模板:</span>
-              <Input
-                size="small"
-                value={createBranchAction.template}
-                onChange={(e) => onUpdate(s => setAction(s, { ...createBranchAction, template: e.target.value }))}
-                style={{ width: 240 }}
-                placeholder="feature/{ticketId}-{shortTitle}"
-              />
-              <span style={{ color: '#888', fontSize: 12 }}>基于分支:</span>
-              <Input
-                size="small"
-                value={createBranchAction.baseBranch || ''}
-                onChange={(e) => onUpdate(s => setAction(s, { ...createBranchAction, baseBranch: e.target.value || undefined }))}
-                style={{ width: 120 }}
-                placeholder="默认当前分支"
-              />
-            </Space>
+            <>
+              <Space style={{ marginTop: 8, flexWrap: 'wrap' }}>
+                <span style={{ color: '#888', fontSize: 12 }}>分支模板:</span>
+                <Input
+                  size="small"
+                  value={createBranchAction.template}
+                  onChange={(e) => onUpdate(s => setAction(s, { ...createBranchAction, template: e.target.value }))}
+                  style={{ width: 280 }}
+                  placeholder="feature/{ticketId}-{shortTitle}"
+                />
+                <span style={{ color: '#888', fontSize: 12 }}>基于分支:</span>
+                <Input
+                  size="small"
+                  value={createBranchAction.baseBranch || ''}
+                  onChange={(e) => onUpdate(s => setAction(s, { ...createBranchAction, baseBranch: e.target.value || undefined }))}
+                  style={{ width: 120 }}
+                  placeholder="默认当前分支"
+                />
+              </Space>
+              <div style={{ marginTop: 4, color: '#888', fontSize: 11 }}>
+                可用变量：{'{ticketId}'} {'{title}'} {'{shortTitle}'} {'{date}'} {'{yyyyMMdd}'} {'{datetime}'} {'{time}'} {'{author}'}
+              </div>
+            </>
           )}
         </ActionRow>
 
@@ -315,8 +320,8 @@ const StepEditorCard: React.FC<StepEditorCardProps> = ({ step, index, total, onU
                 size="small"
                 value={mergeAction.targetBranch}
                 onChange={(e) => onUpdate(s => setAction(s, { ...mergeAction, targetBranch: e.target.value }))}
-                style={{ width: 160 }}
-                placeholder="如 test、release"
+                style={{ width: 200 }}
+                placeholder="如 main、{versionBranch}"
               />
               <label style={{ fontSize: 12, color: '#888', cursor: 'pointer' }}>
                 <input

@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import os from 'os'
 import { Project, Ticket, TicketBranchLink, Version, BizProject, WorkflowConfig } from '@branch-manager/shared'
 import { BranchInfo, GitResult, BatchOp } from '@branch-manager/git-core'
 
@@ -27,6 +28,8 @@ const api = {
       ipcRenderer.invoke('git:deleteBranch', projectId, branchName, force),
     deleteRemoteBranch: (projectId: string, branchName: string): Promise<GitResult> =>
       ipcRenderer.invoke('git:deleteRemoteBranch', projectId, branchName),
+    renameBranch: (projectId: string, oldName: string, newName: string): Promise<GitResult> =>
+      ipcRenderer.invoke('git:renameBranch', projectId, oldName, newName),
     checkoutBranch: (projectId: string, branchName: string): Promise<GitResult> =>
       ipcRenderer.invoke('git:checkoutBranch', projectId, branchName),
     mergeToBranch: (projectId: string, sourceBranch: string, targetBranch: string, ff?: boolean): Promise<GitResult> =>
@@ -65,9 +68,21 @@ const api = {
 }
 
 contextBridge.exposeInMainWorld('api', api)
+function getUserName(): string {
+  try {
+    return os.userInfo().username
+  } catch {
+    return process.env.USER || process.env.USERNAME || 'developer'
+  }
+}
+
+contextBridge.exposeInMainWorld('env', {
+  userName: getUserName()
+})
 
 declare global {
   interface Window {
     api: typeof api
+    env: { userName: string }
   }
 }

@@ -3,7 +3,7 @@ import { Project, BranchInfo, LogEntry } from '../types'
 import { Ticket, TicketBranchLink, Version, BizProject, WorkflowConfig } from '@branch-manager/shared'
 
 type ViewMode = 'project' | 'branch'
-type MainView = 'ticket' | 'branch' | 'workflow'
+type MainView = 'ticket' | 'branch' | 'workflow' | 'archive'
 
 interface AppState {
   projects: Project[]
@@ -57,7 +57,7 @@ export const useStore = create<AppState>((set) => ({
   selectedBranches: {},
   selectedPublicBranches: [],
   viewMode: 'project',
-  mainView: 'branch',
+  mainView: 'ticket',
   bizProjects: [],
   selectedBizProjectId: null,
   tickets: [],

@@ -95,6 +95,14 @@ export function useGitOps() {
     return result
   }, [projects, logResult, refreshRemoteBranches])
 
+  const renameBranch = useCallback(async (projectId: string, oldName: string, newName: string) => {
+    const result = await repositories.git.renameBranch(projectId, oldName, newName)
+    const project = projects.find(p => p.id === projectId)
+    logResult(project?.name || projectId, `重命名分支 ${oldName} -> ${newName}`, result)
+    if (result.success) await refreshBranches(projectId)
+    return result
+  }, [projects, logResult, refreshBranches])
+
   const checkoutBranch = useCallback(async (projectId: string, branchName: string) => {
     const result = await repositories.git.checkoutBranch(projectId, branchName)
     const project = projects.find(p => p.id === projectId)
@@ -158,6 +166,7 @@ export function useGitOps() {
     pushBranch,
     deleteBranch,
     deleteRemoteBranch,
+    renameBranch,
     checkoutBranch,
     mergeToBranch,
     fetchRepo,

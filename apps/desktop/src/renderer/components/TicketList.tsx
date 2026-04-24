@@ -10,7 +10,8 @@ import {
   FileTextOutlined,
   DeleteOutlined,
   EditOutlined,
-  MoreOutlined
+  MoreOutlined,
+  InboxOutlined
 } from '@ant-design/icons'
 import { useStore } from '../stores/useStore'
 import { useTickets } from '../hooks/useTickets'
@@ -25,15 +26,16 @@ interface TicketListProps {
   onCreateTicketForProject?: (bizProjectId: string) => void
   onCreateVersionForProject?: (bizProjectId: string) => void
   onCreateTicketForVersion?: (bizProjectId: string, versionId: string) => void
+  onEditVersion?: (versionId: string) => void
 }
 
 const TicketList: React.FC<TicketListProps> = ({
   onCreateBizProject, onRemoveBizProject,
   onEditBizProject, onCreateTicketForProject, onCreateVersionForProject,
-  onCreateTicketForVersion
+  onCreateTicketForVersion, onEditVersion
 }) => {
   const { refresh: refreshTickets } = useTickets()
-  const { refresh: refreshVersions, remove: removeVersion } = useVersions()
+  const { refresh: refreshVersions, remove: removeVersion, update: updateVersion } = useVersions()
   const { refresh: refreshWorkflows } = useWorkflowConfigs()
   const {
     tickets, versions, selectedTicketId, bizProjects, selectTicket
@@ -82,6 +84,25 @@ const TicketList: React.FC<TicketListProps> = ({
     })
   }, [tickets, removeVersion])
 
+  const handleArchiveVersion = useCallback((versionId: string) => {
+    const versionTickets = tickets.filter(t => t.versionId === versionId)
+    const allDone = versionTickets.length > 0 && versionTickets.every(t => t.status === 'done')
+    if (!allDone) {
+      message.error('该版本下还有未上线的需求，无法归档')
+      return
+    }
+    Modal.confirm({
+      title: '确认归档版本？',
+      content: '归档后该版本及其需求将不再显示在需求管理目录中',
+      okText: '归档',
+      cancelText: '取消',
+      onOk: async () => {
+        await updateVersion(versionId, { archived: true })
+        message.success('版本已归档')
+      }
+    })
+  }, [tickets, updateVersion])
+
   const makeVersionMenu = useCallback((versionId: string, bpId: string): MenuProps['items'] => {
     const items: MenuProps['items'] = []
     if (onCreateTicketForVersion) {
@@ -92,6 +113,20 @@ const TicketList: React.FC<TicketListProps> = ({
         onClick: () => onCreateTicketForVersion(bpId, versionId)
       })
     }
+    if (onEditVersion) {
+      items.push({
+        key: 'edit',
+        label: '编辑版本',
+        icon: <EditOutlined />,
+        onClick: () => onEditVersion(versionId)
+      })
+    }
+    items.push({
+      key: 'archive',
+      label: '归档版本',
+      icon: <InboxOutlined />,
+      onClick: () => handleArchiveVersion(versionId)
+    })
     if (items.length > 0) {
       items.push({ type: 'divider' as const, key: 'divider' })
     }
@@ -103,7 +138,7 @@ const TicketList: React.FC<TicketListProps> = ({
       onClick: () => handleRemoveVersion(versionId)
     })
     return items
-  }, [onCreateTicketForVersion, handleRemoveVersion])
+  }, [onCreateTicketForVersion, onEditVersion, handleRemoveVersion, handleArchiveVersion])
 
   const makeBizProjectMenu = useCallback((bpId: string): MenuProps['items'] => {
     const items: MenuProps['items'] = []
@@ -179,7 +214,7 @@ const TicketList: React.FC<TicketListProps> = ({
       const bpTickets = filteredTickets.filter(t => t.bizProjectId === bp.id)
       if (bpTickets.length === 0 && search.trim()) return
 
-      const bpVersions = versions.filter(v => v.bizProjectId === bp.id)
+      const bpVersions = versions.filter(v => v.bizProjectId === bp.id && !v.archived)
       const bpChildren: TreeDataNode[] = []
 
       // 显示该业务项目下的所有版本（即使为空）
@@ -208,6 +243,11 @@ const TicketList: React.FC<TicketListProps> = ({
                 <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {version.name}
                 </span>
+                {version.versionBranch && (
+                  <span style={{ fontSize: 11, color: '#1677ff', background: '#e6f4ff', padding: '0 6px', borderRadius: 4, flexShrink: 0 }}>
+                    {version.versionBranch}
+                  </span>
+                )}
                 <span style={{ fontSize: 11, color: '#999', background: '#f5f5f5', padding: '0 6px', borderRadius: 4, flexShrink: 0 }}>
                   {versionTickets.length}
                 </span>

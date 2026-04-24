@@ -15,6 +15,7 @@ const VersionCreateModal: React.FC<Props> = ({ open, version, bizProjectId, onCa
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<VersionStatus>('planning')
   const [plannedDate, setPlannedDate] = useState('')
+  const [versionBranch, setVersionBranch] = useState('')
   const isEdit = !!version
 
   useEffect(() => {
@@ -23,11 +24,13 @@ const VersionCreateModal: React.FC<Props> = ({ open, version, bizProjectId, onCa
       setDescription(version.description)
       setStatus(version.status)
       setPlannedDate(version.plannedDate || '')
+      setVersionBranch(version.versionBranch || '')
     } else {
       setName('')
       setDescription('')
       setStatus('planning')
       setPlannedDate('')
+      setVersionBranch('')
     }
   }, [version, open])
 
@@ -42,11 +45,13 @@ const VersionCreateModal: React.FC<Props> = ({ open, version, bizProjectId, onCa
       description: description.trim(),
       status,
       plannedDate: plannedDate || undefined,
+      versionBranch: versionBranch.trim() || undefined,
       bizProjectId
     })
     setName('')
     setDescription('')
     setPlannedDate('')
+    setVersionBranch('')
   }
 
   return (
@@ -75,6 +80,14 @@ const VersionCreateModal: React.FC<Props> = ({ open, version, bizProjectId, onCa
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: 4 }}>版本分支：</label>
+          <Input
+            placeholder="如 release/v1.0.0，或在工作流中使用 {versionBranch}"
+            value={versionBranch}
+            onChange={(e) => setVersionBranch(e.target.value)}
           />
         </div>
         <div style={{ display: 'flex', gap: 12 }}>

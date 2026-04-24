@@ -30,6 +30,10 @@ export class ElectronGitRepository implements GitRepository {
     return window.api.git.deleteRemoteBranch(projectId, branchName)
   }
 
+  async renameBranch(projectId: string, oldName: string, newName: string): Promise<GitResult> {
+    return window.api.git.renameBranch(projectId, oldName, newName)
+  }
+
   async checkoutBranch(projectId: string, branchName: string): Promise<GitResult> {
     return window.api.git.checkoutBranch(projectId, branchName)
   }
