@@ -1,9 +1,19 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, nativeImage } from 'electron'
 import path from 'path'
 import { registerProjectIpc } from './ipc/project'
 import { registerGitIpc } from './ipc/git'
 import { registerTicketIpc } from './ipc/ticket'
 import { registerVersionIpc } from './ipc/version'
+
+function getIconPath(): string | undefined {
+  if (process.platform === 'win32') {
+    return path.join(__dirname, '../../icon.ico')
+  }
+  if (process.platform === 'linux') {
+    return path.join(__dirname, '../../icon.png')
+  }
+  return undefined
+}
 
 function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
@@ -13,6 +23,7 @@ function createWindow(): BrowserWindow {
     minHeight: 600,
     show: false,
     autoHideMenuBar: true,
+    icon: getIconPath(),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -44,6 +55,11 @@ app.whenReady().then(() => {
   registerTicketIpc()
   registerVersionIpc()
   createWindow()
+
+  if (process.platform === 'darwin') {
+    const dockIconPath = path.join(__dirname, '../../icon.png')
+    app.dock.setIcon(nativeImage.createFromPath(dockIconPath))
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
