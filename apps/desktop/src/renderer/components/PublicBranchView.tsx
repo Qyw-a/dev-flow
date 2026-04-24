@@ -48,6 +48,7 @@ const PublicBranchView: React.FC = () => {
   const [createProjectId, setCreateProjectId] = useState('')
   const [createBaseBranch, setCreateBaseBranch] = useState('')
   const [newBranchName, setNewBranchName] = useState('')
+  const [batchCreateRows, setBatchCreateRows] = useState<BranchProjectRow[] | null>(null)
 
   const selectedProjects = projects.filter(p => selectedProjectIds.includes(p.id))
 
@@ -58,9 +59,18 @@ const PublicBranchView: React.FC = () => {
   }, [activeTab, refreshAllRemoteBranches])
 
   const openCreateModal = (projectId: string, baseBranch: string) => {
+    setBatchCreateRows(null)
     setCreateProjectId(projectId)
     setCreateBaseBranch(baseBranch)
     setNewBranchName(baseBranch.replace(/^origin\//, '') + '-new')
+    setCreateModalOpen(true)
+  }
+
+  const openBatchCreateModal = (rows: BranchProjectRow[]) => {
+    setBatchCreateRows(rows)
+    setCreateProjectId('')
+    setCreateBaseBranch(rows[0]?.branchName || '')
+    setNewBranchName((rows[0]?.branchName || '').replace(/^origin\//, '') + '-new')
     setCreateModalOpen(true)
   }
 
@@ -71,7 +81,14 @@ const PublicBranchView: React.FC = () => {
       return
     }
     setCreateModalOpen(false)
-    await createBranch(createProjectId, name, createBaseBranch)
+    if (batchCreateRows && batchCreateRows.length > 0) {
+      for (const row of batchCreateRows) {
+        await createBranch(row.projectId, name, createBaseBranch)
+      }
+      setBatchCreateRows(null)
+    } else {
+      await createBranch(createProjectId, name, createBaseBranch)
+    }
   }
 
   const handleCheckout = async (projectId: string, bname: string) => {
@@ -355,6 +372,13 @@ const PublicBranchView: React.FC = () => {
               extra={
                 isRemote ? (
                   <Space size="small">
+                    <Tooltip title="批量创建分支">
+                      <Button
+                        size="small"
+                        icon={<PlusOutlined />}
+                        onClick={() => openBatchCreateModal(rows)}
+                      />
+                    </Tooltip>
                     <Tooltip title="批量检出到本地">
                       <Button
                         size="small"
@@ -435,10 +459,13 @@ const PublicBranchView: React.FC = () => {
       />
 
       <Modal
-        title="创建分支"
+        title={batchCreateRows ? `批量创建分支（${batchCreateRows.length} 个项目）` : '创建分支'}
         open={createModalOpen}
         onOk={handleCreateConfirm}
-        onCancel={() => setCreateModalOpen(false)}
+        onCancel={() => {
+          setCreateModalOpen(false)
+          setBatchCreateRows(null)
+        }}
         okText="创建"
         cancelText="取消"
       >
