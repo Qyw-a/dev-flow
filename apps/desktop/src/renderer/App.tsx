@@ -52,9 +52,14 @@ const TicketView: React.FC = () => {
   }
 
   const handleVersionConfirm = async (values: Omit<import('@branch-manager/shared').Version, 'id' | 'createdAt'>) => {
-    await createVersion(values)
-    message.success('版本创建成功')
-    setVersionModalOpen(false)
+    try {
+      await createVersion(values)
+      message.success('版本创建成功')
+    } catch (err: any) {
+      message.error('创建失败: ' + (err.message || String(err)))
+    } finally {
+      setVersionModalOpen(false)
+    }
   }
 
   return (

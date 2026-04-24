@@ -30,13 +30,13 @@ const VersionCreateModal: React.FC<Props> = ({ open, version, onCancel, onConfir
     }
   }, [version, open])
 
-  const handleOk = () => {
+  const handleOk = async () => {
     const n = name.trim()
     if (!n) {
       message.warning('请输入版本名称')
       return
     }
-    onConfirm({
+    await onConfirm({
       name: n,
       description: description.trim(),
       status,
