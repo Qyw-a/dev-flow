@@ -1,6 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Table, Tag, Space, Card, Empty, Checkbox, Tabs } from 'antd'
-import { BranchesOutlined, GlobalOutlined } from '@ant-design/icons'
+import { Table, Tag, Space, Card, Empty, Checkbox, Tabs, Button, Tooltip, Modal, Input, message, Popconfirm } from 'antd'
+import {
+  BranchesOutlined,
+  GlobalOutlined,
+  PlusOutlined,
+  MergeCellsOutlined,
+  CloudUploadOutlined,
+  DeleteOutlined,
+  SwapOutlined
+} from '@ant-design/icons'
 import { useStore } from '../stores/useStore'
 import { useProjects } from '../hooks/useProjects'
 import { useGitOps } from '../hooks/useGitOps'
@@ -25,9 +33,21 @@ const PublicBranchView: React.FC = () => {
     selectedPublicBranches,
     togglePublicBranchSelection
   } = useStore()
-  const { refreshAllRemoteBranches } = useGitOps()
+  const {
+    refreshAllRemoteBranches,
+    createBranch,
+    mergeBranch,
+    pushBranch,
+    deleteBranch,
+    checkoutBranch
+  } = useGitOps()
 
   const [activeTab, setActiveTab] = useState<'local' | 'remote'>('local')
+
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [createProjectId, setCreateProjectId] = useState('')
+  const [createBaseBranch, setCreateBaseBranch] = useState('')
+  const [newBranchName, setNewBranchName] = useState('')
 
   const selectedProjects = projects.filter(p => selectedProjectIds.includes(p.id))
 
@@ -36,6 +56,59 @@ const PublicBranchView: React.FC = () => {
       refreshAllRemoteBranches()
     }
   }, [activeTab, refreshAllRemoteBranches])
+
+  const openCreateModal = (projectId: string, baseBranch: string) => {
+    setCreateProjectId(projectId)
+    setCreateBaseBranch(baseBranch)
+    setNewBranchName(baseBranch.replace(/^origin\//, '') + '-new')
+    setCreateModalOpen(true)
+  }
+
+  const handleCreateConfirm = async () => {
+    const name = newBranchName.trim()
+    if (!name) {
+      message.warning('请输入分支名称')
+      return
+    }
+    setCreateModalOpen(false)
+    await createBranch(createProjectId, name, createBaseBranch)
+  }
+
+  const handleCheckout = async (projectId: string, bname: string) => {
+    const hide = message.loading('正在切换分支...', 0)
+    try {
+      await checkoutBranch(projectId, bname)
+    } finally {
+      hide()
+    }
+  }
+
+  const handleMerge = async (projectId: string, bname: string) => {
+    const hide = message.loading('正在合并分支...', 0)
+    try {
+      await mergeBranch(projectId, bname)
+    } finally {
+      hide()
+    }
+  }
+
+  const handlePush = async (projectId: string, bname: string) => {
+    const hide = message.loading('正在推送分支...', 0)
+    try {
+      await pushBranch(projectId, bname)
+    } finally {
+      hide()
+    }
+  }
+
+  const handleDelete = async (projectId: string, bname: string) => {
+    const hide = message.loading('正在删除分支...', 0)
+    try {
+      await deleteBranch(projectId, bname)
+    } finally {
+      hide()
+    }
+  }
 
   const localData = useMemo(() => {
     const map = new Map<string, BranchProjectRow[]>()
@@ -83,7 +156,7 @@ const PublicBranchView: React.FC = () => {
     return { grouped: map, branchNames: names }
   }, [selectedProjects, remoteBranchesMap])
 
-  const columns = [
+  const baseColumns = [
     {
       title: '项目',
       dataIndex: 'projectName',
@@ -103,6 +176,88 @@ const PublicBranchView: React.FC = () => {
           <div style={{ fontSize: 11, color: '#aaa' }}>{record.date}</div>
         </div>
       )
+    }
+  ]
+
+  const localColumns = [
+    ...baseColumns,
+    {
+      title: '操作',
+      key: 'action',
+      width: 200,
+      render: (_: any, record: BranchProjectRow) => {
+        const isCurrent = record.current
+        const pid = record.projectId
+        const bname = record.branchName
+        return (
+          <Space size="small">
+            <Tooltip title="切换到该分支">
+              <Button
+                size="small"
+                icon={<SwapOutlined />}
+                disabled={isCurrent}
+                onClick={() => handleCheckout(pid, bname)}
+              />
+            </Tooltip>
+            <Tooltip title="以此为基础创建分支">
+              <Button
+                size="small"
+                icon={<PlusOutlined />}
+                onClick={() => openCreateModal(pid, bname)}
+              />
+            </Tooltip>
+            <Tooltip title="合并到当前分支">
+              <Button
+                size="small"
+                icon={<MergeCellsOutlined />}
+                disabled={isCurrent}
+                onClick={() => handleMerge(pid, bname)}
+              />
+            </Tooltip>
+            <Tooltip title="推送">
+              <Button
+                size="small"
+                icon={<CloudUploadOutlined />}
+                onClick={() => handlePush(pid, bname)}
+              />
+            </Tooltip>
+            <Popconfirm
+              title="确认删除分支？"
+              description={`删除分支 ${bname}`}
+              okText="删除"
+              cancelText="取消"
+              okButtonProps={{ danger: true }}
+              onConfirm={() => handleDelete(pid, bname)}
+            >
+              <Button size="small" danger icon={<DeleteOutlined />} disabled={isCurrent} />
+            </Popconfirm>
+          </Space>
+        )
+      }
+    }
+  ]
+
+  const remoteColumns = [
+    ...baseColumns,
+    {
+      title: '操作',
+      key: 'action',
+      width: 120,
+      render: (_: any, record: BranchProjectRow) => {
+        const pid = record.projectId
+        const bname = record.branchName
+        return (
+          <Space size="small">
+            <Tooltip title="以此为基础创建分支">
+              <Button
+                size="small"
+                icon={<PlusOutlined />}
+                onClick={() => openCreateModal(pid, bname)}
+              />
+            </Tooltip>
+          </Space>
+        )
+      }
     }
   ]
 
@@ -151,7 +306,7 @@ const PublicBranchView: React.FC = () => {
             >
               <Table<BranchProjectRow>
                 size="small"
-                columns={columns}
+                columns={isRemote ? remoteColumns : localColumns}
                 dataSource={rows}
                 pagination={false}
                 rowKey="key"
@@ -172,22 +327,47 @@ const PublicBranchView: React.FC = () => {
   }
 
   return (
-    <Tabs
-      activeKey={activeTab}
-      onChange={(key) => setActiveTab(key as 'local' | 'remote')}
-      items={[
-        {
-          key: 'local',
-          label: `本地分支 (${localData.branchNames.length})`,
-          children: renderBranchCards(localData, false)
-        },
-        {
-          key: 'remote',
-          label: `远程分支 (${remoteData.branchNames.length})`,
-          children: renderBranchCards(remoteData, true)
-        }
-      ]}
-    />
+    <>
+      <Tabs
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key as 'local' | 'remote')}
+        items={[
+          {
+            key: 'local',
+            label: `本地分支 (${localData.branchNames.length})`,
+            children: renderBranchCards(localData, false)
+          },
+          {
+            key: 'remote',
+            label: `远程分支 (${remoteData.branchNames.length})`,
+            children: renderBranchCards(remoteData, true)
+          }
+        ]}
+      />
+
+      <Modal
+        title="创建分支"
+        open={createModalOpen}
+        onOk={handleCreateConfirm}
+        onCancel={() => setCreateModalOpen(false)}
+        okText="创建"
+        cancelText="取消"
+      >
+        <div style={{ marginTop: 8 }}>
+          <div style={{ marginBottom: 8 }}>
+            {createBaseBranch.startsWith('origin/') ? '基于远程分支：' : '基于分支：'}
+            <Tag>{createBaseBranch}</Tag>
+          </div>
+          <Input
+            placeholder="请输入新分支名称"
+            value={newBranchName}
+            onChange={(e) => setNewBranchName(e.target.value)}
+            onPressEnter={handleCreateConfirm}
+            autoFocus
+          />
+        </div>
+      </Modal>
+    </>
   )
 }
 
