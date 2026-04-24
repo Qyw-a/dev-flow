@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react'
-import { Table, Tag, Space, Card, Empty, Checkbox } from 'antd'
-import { BranchesOutlined } from '@ant-design/icons'
+import React, { useEffect, useMemo, useState } from 'react'
+import { Table, Tag, Space, Card, Empty, Checkbox, Tabs } from 'antd'
+import { BranchesOutlined, GlobalOutlined } from '@ant-design/icons'
 import { useStore } from '../stores/useStore'
 import { useProjects } from '../hooks/useProjects'
+import { useGitOps } from '../hooks/useGitOps'
 
 interface BranchProjectRow {
   key: string
@@ -19,14 +20,24 @@ const PublicBranchView: React.FC = () => {
   const { projects } = useProjects()
   const {
     branchesMap,
+    remoteBranchesMap,
     selectedProjectIds,
     selectedPublicBranches,
     togglePublicBranchSelection
   } = useStore()
+  const { refreshAllRemoteBranches } = useGitOps()
+
+  const [activeTab, setActiveTab] = useState<'local' | 'remote'>('local')
 
   const selectedProjects = projects.filter(p => selectedProjectIds.includes(p.id))
 
-  const { grouped, branchNames } = useMemo(() => {
+  useEffect(() => {
+    if (activeTab === 'remote') {
+      refreshAllRemoteBranches()
+    }
+  }, [activeTab, refreshAllRemoteBranches])
+
+  const localData = useMemo(() => {
     const map = new Map<string, BranchProjectRow[]>()
     selectedProjects.forEach(project => {
       const branches = branchesMap[project.id] || []
@@ -48,6 +59,29 @@ const PublicBranchView: React.FC = () => {
     const names = Array.from(map.keys()).sort()
     return { grouped: map, branchNames: names }
   }, [selectedProjects, branchesMap])
+
+  const remoteData = useMemo(() => {
+    const map = new Map<string, BranchProjectRow[]>()
+    selectedProjects.forEach(project => {
+      const branches = remoteBranchesMap[project.id] || []
+      branches.forEach(branch => {
+        const list = map.get(branch.name) || []
+        list.push({
+          key: `${project.id}-${branch.name}`,
+          branchName: branch.name,
+          projectId: project.id,
+          projectName: project.name,
+          current: false,
+          commit: branch.commit,
+          label: branch.label,
+          date: branch.date
+        })
+        map.set(branch.name, list)
+      })
+    })
+    const names = Array.from(map.keys()).sort()
+    return { grouped: map, branchNames: names }
+  }, [selectedProjects, remoteBranchesMap])
 
   const columns = [
     {
@@ -72,6 +106,63 @@ const PublicBranchView: React.FC = () => {
     }
   ]
 
+  const renderBranchCards = (
+    data: { grouped: Map<string, BranchProjectRow[]>; branchNames: string[] },
+    isRemote: boolean
+  ) => {
+    if (data.branchNames.length === 0) {
+      return <Empty description={isRemote ? '暂无远程分支数据' : '暂无分支数据'} style={{ marginTop: 60 }} />
+    }
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {data.branchNames.map(name => {
+          const rows = data.grouped.get(name) || []
+          const projectCount = rows.length
+          const checked = selectedPublicBranches.includes(name)
+          const parts = isRemote ? name.split('/') : []
+          const remotePrefix = isRemote ? parts[0] : ''
+          const branchDisplayName = isRemote ? parts.slice(1).join('/') : name
+
+          return (
+            <Card
+              key={name}
+              size="small"
+              title={
+                <Space>
+                  {!isRemote && (
+                    <Checkbox
+                      checked={checked}
+                      onChange={() => togglePublicBranchSelection(name)}
+                    />
+                  )}
+                  {isRemote ? <GlobalOutlined /> : <BranchesOutlined />}
+                  {isRemote ? (
+                    <>
+                      <span style={{ color: '#888' }}>{remotePrefix}/</span>
+                      <span style={{ fontWeight: 600 }}>{branchDisplayName}</span>
+                    </>
+                  ) : (
+                    <span style={{ fontWeight: 600 }}>{name}</span>
+                  )}
+                  <Tag color="blue">{projectCount} 个项目</Tag>
+                </Space>
+              }
+            >
+              <Table<BranchProjectRow>
+                size="small"
+                columns={columns}
+                dataSource={rows}
+                pagination={false}
+                rowKey="key"
+              />
+            </Card>
+          )
+        })}
+      </div>
+    )
+  }
+
   if (selectedProjects.length === 0) {
     return (
       <div style={{ textAlign: 'center', paddingTop: 60, color: '#888' }}>
@@ -80,43 +171,23 @@ const PublicBranchView: React.FC = () => {
     )
   }
 
-  if (branchNames.length === 0) {
-    return <Empty description="暂无分支数据" style={{ marginTop: 60 }} />
-  }
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {branchNames.map(name => {
-        const rows = grouped.get(name) || []
-        const projectCount = rows.length
-        const checked = selectedPublicBranches.includes(name)
-        return (
-          <Card
-            key={name}
-            size="small"
-            title={
-              <Space>
-                <Checkbox
-                  checked={checked}
-                  onChange={() => togglePublicBranchSelection(name)}
-                />
-                <BranchesOutlined />
-                <span style={{ fontWeight: 600 }}>{name}</span>
-                <Tag color="blue">{projectCount} 个项目</Tag>
-              </Space>
-            }
-          >
-            <Table<BranchProjectRow>
-              size="small"
-              columns={columns}
-              dataSource={rows}
-              pagination={false}
-              rowKey="key"
-            />
-          </Card>
-        )
-      })}
-    </div>
+    <Tabs
+      activeKey={activeTab}
+      onChange={(key) => setActiveTab(key as 'local' | 'remote')}
+      items={[
+        {
+          key: 'local',
+          label: `本地分支 (${localData.branchNames.length})`,
+          children: renderBranchCards(localData, false)
+        },
+        {
+          key: 'remote',
+          label: `远程分支 (${remoteData.branchNames.length})`,
+          children: renderBranchCards(remoteData, true)
+        }
+      ]}
+    />
   )
 }
 
