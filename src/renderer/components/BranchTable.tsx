@@ -1,0 +1,327 @@
+import React, { useEffect, useState } from 'react'
+import { Table, Button, Tag, Space, Popconfirm, Tooltip, Modal, Input, message, Card, Tabs } from 'antd'
+import {
+  PlusOutlined,
+  MergeCellsOutlined,
+  CloudUploadOutlined,
+  DeleteOutlined,
+  ReloadOutlined,
+  BranchesOutlined,
+  SwapOutlined
+} from '@ant-design/icons'
+import { useStore } from '../stores/useStore'
+import { useProjects } from '../hooks/useProjects'
+import { useGitOps } from '../hooks/useGitOps'
+import { BranchInfo } from '../types'
+
+type BranchRow = BranchInfo & { projectId: string }
+
+const BranchTable: React.FC = () => {
+  const { projects } = useProjects()
+  const {
+    branchesMap,
+    remoteBranchesMap,
+    loadingBranches,
+    selectedProjectIds,
+    selectedBranches,
+    setProjectSelectedBranches
+  } = useStore()
+  const { refreshBranches, refreshRemoteBranches, createBranch, mergeBranch, pushBranch, deleteBranch, checkoutBranch } = useGitOps()
+
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [createProjectId, setCreateProjectId] = useState('')
+  const [createBaseBranch, setCreateBaseBranch] = useState('')
+  const [newBranchName, setNewBranchName] = useState('')
+
+  const selectedProjects = projects.filter(p => selectedProjectIds.includes(p.id))
+
+  useEffect(() => {
+    selectedProjects.forEach(p => {
+      if (p.isGitRepo && !branchesMap[p.id]) {
+        refreshBranches(p.id)
+      }
+      if (p.isGitRepo && !remoteBranchesMap[p.id]) {
+        refreshRemoteBranches(p.id)
+      }
+    })
+  }, [selectedProjects.map(p => p.id).join(',')])
+
+  const openCreateModal = (projectId: string, baseBranch: string) => {
+    setCreateProjectId(projectId)
+    setCreateBaseBranch(baseBranch)
+    setNewBranchName(baseBranch + '-new')
+    setCreateModalOpen(true)
+  }
+
+  const handleCreateConfirm = async () => {
+    const name = newBranchName.trim()
+    if (!name) {
+      message.warning('请输入分支名称')
+      return
+    }
+    setCreateModalOpen(false)
+    await createBranch(createProjectId, name, createBaseBranch)
+  }
+
+  const handleCheckout = async (projectId: string, bname: string) => {
+    const hide = message.loading('正在切换分支...', 0)
+    try {
+      await checkoutBranch(projectId, bname)
+    } finally {
+      hide()
+    }
+  }
+
+  const handleMerge = async (projectId: string, bname: string) => {
+    const hide = message.loading('正在合并分支...', 0)
+    try {
+      await mergeBranch(projectId, bname)
+    } finally {
+      hide()
+    }
+  }
+
+  const handlePush = async (projectId: string, bname: string) => {
+    const hide = message.loading('正在推送分支...', 0)
+    try {
+      await pushBranch(projectId, bname)
+    } finally {
+      hide()
+    }
+  }
+
+  const handleDelete = async (projectId: string, bname: string) => {
+    const hide = message.loading('正在删除分支...', 0)
+    try {
+      await deleteBranch(projectId, bname)
+    } finally {
+      hide()
+    }
+  }
+
+  if (selectedProjects.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', paddingTop: 60, color: '#888' }}>
+        请在左侧选择项目
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {selectedProjects.map(project => {
+          const branches = branchesMap[project.id] || []
+          const dataSource: BranchRow[] = branches.map(b => ({ ...b, projectId: project.id }))
+          const rowSelection = {
+            selectedRowKeys: selectedBranches[project.id] || [],
+            onChange: (keys: React.Key[]) => {
+              setProjectSelectedBranches(project.id, keys as string[])
+            },
+            getCheckboxProps: (record: BranchInfo) => ({
+              disabled: record.current
+            })
+          }
+
+          return (
+            <Card
+              key={project.id}
+              size="small"
+              title={
+                <Space>
+                  <span style={{ fontWeight: 600 }}>{project.name}</span>
+                  {!project.isGitRepo && <Tag color="error">非Git仓库</Tag>}
+                </Space>
+              }
+              extra={
+                <Button
+                  size="small"
+                  icon={<ReloadOutlined />}
+                  onClick={() => {
+                    refreshBranches(project.id)
+                    refreshRemoteBranches(project.id)
+                  }}
+                >
+                  刷新
+                </Button>
+              }
+            >
+              <Tabs
+                size="small"
+                items={[
+                  {
+                    key: 'local',
+                    label: `本地分支 (${branches.length})`,
+                    children: (
+                      <Table<BranchRow>
+                        size="small"
+                        dataSource={dataSource}
+                        rowSelection={rowSelection}
+                        pagination={false}
+                        loading={loadingBranches && branches.length === 0}
+                        locale={{ emptyText: project.isGitRepo ? '暂无分支数据' : '不是有效的 Git 仓库' }}
+                        rowKey="name"
+                        scroll={{ x: 'max-content' }}
+                        columns={[
+                          {
+                            title: '分支',
+                            key: 'name',
+                            render: (_: any, record: BranchRow) => (
+                              <Space>
+                                <BranchesOutlined />
+                                {record.current ? (
+                                  <Tag color="blue">{record.name}</Tag>
+                                ) : (
+                                  <span>{record.name}</span>
+                                )}
+                                {record.current && <Tag color="cyan">当前</Tag>}
+                              </Space>
+                            )
+                          },
+                          {
+                            title: '最新提交',
+                            key: 'commit',
+                            width: 300,
+                            render: (_: any, record: BranchRow) => (
+                              <div>
+                                <div style={{ fontSize: 12, color: '#888' }}>{record.commit}</div>
+                                <div style={{ fontSize: 12 }}>{record.label}</div>
+                                <div style={{ fontSize: 11, color: '#aaa' }}>{record.date}</div>
+                              </div>
+                            )
+                          },
+                          {
+                            title: '操作',
+                            key: 'action',
+                            width: 200,
+                            render: (_: any, record: BranchRow) => {
+                              const isCurrent = record.current
+                              const pid = record.projectId
+                              const bname = record.name
+                              return (
+                                <Space size="small">
+                                  <Tooltip title="切换到该分支">
+                                    <Button
+                                      size="small"
+                                      icon={<SwapOutlined />}
+                                      disabled={isCurrent}
+                                      onClick={() => handleCheckout(pid, bname)}
+                                    />
+                                  </Tooltip>
+                                  <Tooltip title="以此为基础创建分支">
+                                    <Button
+                                      size="small"
+                                      icon={<PlusOutlined />}
+                                      onClick={() => openCreateModal(pid, bname)}
+                                    />
+                                  </Tooltip>
+                                  <Tooltip title="合并到当前分支">
+                                    <Button
+                                      size="small"
+                                      icon={<MergeCellsOutlined />}
+                                      disabled={isCurrent}
+                                      onClick={() => handleMerge(pid, bname)}
+                                    />
+                                  </Tooltip>
+                                  <Tooltip title="推送">
+                                    <Button
+                                      size="small"
+                                      icon={<CloudUploadOutlined />}
+                                      onClick={() => handlePush(pid, bname)}
+                                    />
+                                  </Tooltip>
+                                  <Popconfirm
+                                    title="确认删除分支？"
+                                    description={`删除分支 ${bname}`}
+                                    okText="删除"
+                                    cancelText="取消"
+                                    okButtonProps={{ danger: true }}
+                                    onConfirm={() => handleDelete(pid, bname)}
+                                  >
+                                    <Button size="small" danger icon={<DeleteOutlined />} disabled={isCurrent} />
+                                  </Popconfirm>
+                                </Space>
+                              )
+                            }
+                          }
+                        ]}
+                      />
+                    )
+                  },
+                  {
+                    key: 'remote',
+                    label: `远程分支 (${(remoteBranchesMap[project.id] || []).length})`,
+                    children: (
+                      <Table<BranchRow>
+                        size="small"
+                        dataSource={(remoteBranchesMap[project.id] || []).map(b => ({ ...b, projectId: project.id }))}
+                        pagination={false}
+                        locale={{ emptyText: '暂无远程分支数据' }}
+                        rowKey="name"
+                        scroll={{ x: 'max-content' }}
+                        columns={[
+                          {
+                            title: '分支',
+                            key: 'name',
+                            render: (_: any, record: BranchRow) => {
+                              const parts = record.name.split('/')
+                              const remote = parts[0]
+                              const branchName = parts.slice(1).join('/')
+                              return (
+                                <Space>
+                                  <BranchesOutlined />
+                                  <span style={{ color: '#888' }}>{remote}/</span>
+                                  <span>{branchName}</span>
+                                </Space>
+                              )
+                            }
+                          },
+                          {
+                            title: '最新提交',
+                            key: 'commit',
+                            width: 300,
+                            render: (_: any, record: BranchRow) => (
+                              <div>
+                                <div style={{ fontSize: 12, color: '#888' }}>{record.commit}</div>
+                                <div style={{ fontSize: 12 }}>{record.label}</div>
+                                <div style={{ fontSize: 11, color: '#aaa' }}>{record.date}</div>
+                              </div>
+                            )
+                          }
+                        ]}
+                      />
+                    )
+                  }
+                ]}
+              />
+            </Card>
+          )
+        })}
+      </div>
+
+      <Modal
+        title="创建分支"
+        open={createModalOpen}
+        onOk={handleCreateConfirm}
+        onCancel={() => setCreateModalOpen(false)}
+        okText="创建"
+        cancelText="取消"
+      >
+        <div style={{ marginTop: 8 }}>
+          <div style={{ marginBottom: 8 }}>
+            基于分支：<Tag>{createBaseBranch}</Tag>
+          </div>
+          <Input
+            placeholder="请输入新分支名称"
+            value={newBranchName}
+            onChange={(e) => setNewBranchName(e.target.value)}
+            onPressEnter={handleCreateConfirm}
+            autoFocus
+          />
+        </div>
+      </Modal>
+    </>
+  )
+}
+
+export default BranchTable
