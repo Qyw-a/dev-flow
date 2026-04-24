@@ -1,7 +1,7 @@
 {
   "name": "@branch-manager/desktop",
   "version": "1.0.0",
-  "description": "Electron Git Branch Manager Desktop App",
+  "description": "DevFlow - 需求-分支关联管理桌面应用",
   "main": "./out/main/index.js",
   "private": true,
   "scripts": {

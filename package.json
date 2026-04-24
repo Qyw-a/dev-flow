@@ -2,7 +2,7 @@
   "name": "@branch-manager/monorepo",
   "private": true,
   "version": "1.0.0",
-  "description": "Branch Manager monorepo",
+  "description": "DevFlow monorepo",
   "scripts": {
     "dev": "pnpm --filter @branch-manager/desktop dev",
     "build": "pnpm --filter @branch-manager/desktop build",

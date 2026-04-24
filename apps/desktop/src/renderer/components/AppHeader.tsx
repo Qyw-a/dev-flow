@@ -27,7 +27,7 @@ const AppHeader: React.FC = () => {
       }}
     >
       <div style={{ fontWeight: 600, fontSize: 16, color: '#1677ff' }}>
-        Branch Manager
+        DevFlow
       </div>
       <Menu
         mode="horizontal"
