@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { Project, Ticket, TicketBranchLink } from '@branch-manager/shared'
+import { Project, Ticket, TicketBranchLink, Version } from '@branch-manager/shared'
 import { BranchInfo, GitResult, BatchOp } from '@branch-manager/git-core'
 
 const api = {
@@ -37,6 +37,12 @@ const api = {
     listBranches: (ticketId: string): Promise<TicketBranchLink[]> => ipcRenderer.invoke('ticket:listBranches', ticketId),
     linkBranch: (ticketId: string, projectId: string, branchName: string): Promise<void> => ipcRenderer.invoke('ticket:linkBranch', ticketId, projectId, branchName),
     unlinkBranch: (ticketId: string, projectId: string, branchName: string): Promise<void> => ipcRenderer.invoke('ticket:unlinkBranch', ticketId, projectId, branchName)
+  },
+  version: {
+    list: (): Promise<Version[]> => ipcRenderer.invoke('version:list'),
+    create: (version: Omit<Version, 'id' | 'createdAt'>): Promise<Version> => ipcRenderer.invoke('version:create', version),
+    update: (id: string, updates: Partial<Omit<Version, 'id' | 'createdAt'>>): Promise<Version | null> => ipcRenderer.invoke('version:update', id, updates),
+    remove: (id: string): Promise<void> => ipcRenderer.invoke('version:remove', id)
   }
 }
 

@@ -40,7 +40,7 @@ interface TicketDetailProps {
 const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onEdit }) => {
   const { projects } = useProjects()
   const { remove, refreshBranches, linkBranch, unlinkBranch } = useTickets()
-  const { branchesMap, ticketBranchesMap } = useStore()
+  const { branchesMap, ticketBranchesMap, versions } = useStore()
   const { createBranch, checkoutBranch, mergeBranch, pushBranch } = useGitOps()
 
   const [linkProjectId, setLinkProjectId] = useState('')
@@ -51,6 +51,7 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onEdit }) => {
   const [newBranchName, setNewBranchName] = useState('')
 
   const links = ticketBranchesMap[ticket.id] || []
+  const version = versions.find(v => v.id === ticket.versionId)
 
   useEffect(() => {
     refreshBranches(ticket.id)
@@ -194,6 +195,7 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onEdit }) => {
       >
         <Space direction="vertical" size={8} style={{ width: '100%' }}>
           <div style={{ color: '#888', fontSize: 13 }}>ID: {ticket.id}</div>
+          {version && <div style={{ color: '#888', fontSize: 13 }}>版本: <Tag color="purple">{version.name}</Tag></div>}
           <div style={{ color: '#888', fontSize: 13 }}>创建时间: {new Date(ticket.createdAt).toLocaleString()}</div>
           <div>{ticket.description || '暂无描述'}</div>
         </Space>

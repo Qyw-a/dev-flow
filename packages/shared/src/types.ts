@@ -7,6 +7,16 @@ export interface Project {
 
 export type TicketStatus = 'todo' | 'dev' | 'test' | 'done'
 export type TicketPriority = 'low' | 'medium' | 'high'
+export type VersionStatus = 'planning' | 'developing' | 'testing' | 'released'
+
+export interface Version {
+  id: string
+  name: string
+  description: string
+  status: VersionStatus
+  plannedDate?: string
+  createdAt: string
+}
 
 export interface Ticket {
   id: string
@@ -14,6 +24,7 @@ export interface Ticket {
   description: string
   status: TicketStatus
   priority: TicketPriority
+  versionId?: string
   createdAt: string
 }
 

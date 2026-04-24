@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { Project, BranchInfo, LogEntry } from '../types'
-import { Ticket, TicketBranchLink } from '@branch-manager/shared'
+import { Ticket, TicketBranchLink, Version } from '@branch-manager/shared'
 
 type ViewMode = 'project' | 'branch'
 type MainView = 'ticket' | 'branch' | 'workflow'
@@ -17,6 +17,8 @@ interface AppState {
   tickets: Ticket[]
   selectedTicketId: string | null
   ticketBranchesMap: Record<string, TicketBranchLink[]>
+  versions: Version[]
+  selectedVersionId: string | null
   logs: LogEntry[]
   loadingBranches: boolean
   setProjects: (projects: Project[]) => void
@@ -34,6 +36,8 @@ interface AppState {
   setTickets: (tickets: Ticket[]) => void
   selectTicket: (id: string | null) => void
   setTicketBranches: (ticketId: string, links: TicketBranchLink[]) => void
+  setVersions: (versions: Version[]) => void
+  selectVersion: (id: string | null) => void
   addLog: (log: LogEntry) => void
   clearLogs: () => void
   setLoadingBranches: (loading: boolean) => void
@@ -51,6 +55,8 @@ export const useStore = create<AppState>((set) => ({
   tickets: [],
   selectedTicketId: null,
   ticketBranchesMap: {},
+  versions: [],
+  selectedVersionId: null,
   logs: [],
   loadingBranches: false,
   setProjects: (projects) => set({ projects }),
@@ -84,6 +90,8 @@ export const useStore = create<AppState>((set) => ({
   setTicketBranches: (ticketId, links) => set((state) => ({
     ticketBranchesMap: { ...state.ticketBranchesMap, [ticketId]: links }
   })),
+  setVersions: (versions) => set({ versions }),
+  selectVersion: (id) => set({ selectedVersionId: id }),
   addLog: (log) => set((state) => ({ logs: [log, ...state.logs] })),
   clearLogs: () => set({ logs: [] }),
   setLoadingBranches: (loading) => set({ loadingBranches: loading })

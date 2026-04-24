@@ -6,8 +6,10 @@ import WorkflowView from './components/WorkflowView'
 import TicketList from './components/TicketList'
 import TicketDetail from './components/TicketDetail'
 import TicketCreateModal from './components/TicketCreateModal'
+import VersionCreateModal from './components/VersionCreateModal'
 import { useProjects } from './hooks/useProjects'
 import { useTickets } from './hooks/useTickets'
+import { useVersions } from './hooks/useVersions'
 import { useStore } from './stores/useStore'
 import { Ticket } from '@branch-manager/shared'
 
@@ -16,7 +18,9 @@ const { Sider, Content } = Layout
 const TicketView: React.FC = () => {
   const { tickets, selectedTicketId, selectTicket } = useStore()
   const { create, update } = useTickets()
+  const { create: createVersion } = useVersions()
   const [modalOpen, setModalOpen] = useState(false)
+  const [versionModalOpen, setVersionModalOpen] = useState(false)
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null)
 
   const selectedTicket = tickets.find(t => t.id === selectedTicketId) || null
@@ -47,10 +51,16 @@ const TicketView: React.FC = () => {
     setModalOpen(false)
   }
 
+  const handleVersionConfirm = async (values: Omit<import('@branch-manager/shared').Version, 'id' | 'createdAt'>) => {
+    await createVersion(values)
+    message.success('版本创建成功')
+    setVersionModalOpen(false)
+  }
+
   return (
     <Layout style={{ height: '100%' }}>
       <Sider width={320} theme="light" style={{ borderRight: '1px solid #f0f0f0', padding: 16 }}>
-        <TicketList onCreate={handleCreate} />
+        <TicketList onCreate={handleCreate} onCreateVersion={() => setVersionModalOpen(true)} />
       </Sider>
       <Content style={{ padding: 16, overflow: 'auto' }}>
         {selectedTicket ? (
@@ -66,6 +76,12 @@ const TicketView: React.FC = () => {
         ticket={editingTicket}
         onCancel={() => setModalOpen(false)}
         onConfirm={handleConfirm}
+      />
+      <VersionCreateModal
+        open={versionModalOpen}
+        version={null}
+        onCancel={() => setVersionModalOpen(false)}
+        onConfirm={handleVersionConfirm}
       />
     </Layout>
   )

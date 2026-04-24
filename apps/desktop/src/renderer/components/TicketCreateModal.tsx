@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Modal, Input, Select, message } from 'antd'
 import { Ticket, TicketStatus, TicketPriority } from '@branch-manager/shared'
+import { useStore } from '../stores/useStore'
 
 interface Props {
   open: boolean
@@ -14,7 +15,9 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, onCancel, onConfirm 
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<TicketStatus>('todo')
   const [priority, setPriority] = useState<TicketPriority>('medium')
+  const [versionId, setVersionId] = useState<string | undefined>(undefined)
   const isEdit = !!ticket
+  const { versions } = useStore()
 
   useEffect(() => {
     if (ticket) {
@@ -22,11 +25,13 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, onCancel, onConfirm 
       setDescription(ticket.description)
       setStatus(ticket.status)
       setPriority(ticket.priority)
+      setVersionId(ticket.versionId)
     } else {
       setTitle('')
       setDescription('')
       setStatus('todo')
       setPriority('medium')
+      setVersionId(undefined)
     }
   }, [ticket, open])
 
@@ -36,7 +41,7 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, onCancel, onConfirm 
       message.warning('请输入需求标题')
       return
     }
-    onConfirm({ title: t, description: description.trim(), status, priority })
+    onConfirm({ title: t, description: description.trim(), status, priority, versionId: versionId || undefined })
     setTitle('')
     setDescription('')
   }
@@ -97,6 +102,17 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, onCancel, onConfirm 
               ]}
             />
           </div>
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: 4 }}>所属版本：</label>
+          <Select
+            placeholder="选择版本（可选）"
+            value={versionId}
+            onChange={(v) => setVersionId(v)}
+            style={{ width: '100%' }}
+            allowClear
+            options={versions.map(v => ({ label: v.name, value: v.id }))}
+          />
         </div>
       </div>
     </Modal>

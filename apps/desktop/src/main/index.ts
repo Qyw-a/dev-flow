@@ -3,6 +3,7 @@ import path from 'path'
 import { registerProjectIpc } from './ipc/project'
 import { registerGitIpc } from './ipc/git'
 import { registerTicketIpc } from './ipc/ticket'
+import { registerVersionIpc } from './ipc/version'
 
 function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
@@ -41,6 +42,7 @@ app.whenReady().then(() => {
   registerProjectIpc()
   registerGitIpc()
   registerTicketIpc()
+  registerVersionIpc()
   createWindow()
 
   app.on('activate', () => {
