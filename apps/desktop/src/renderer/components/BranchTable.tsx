@@ -287,6 +287,26 @@ const BranchTable: React.FC = () => {
                                 <div style={{ fontSize: 11, color: '#aaa' }}>{record.date}</div>
                               </div>
                             )
+                          },
+                          {
+                            title: '操作',
+                            key: 'action',
+                            width: 120,
+                            render: (_: any, record: BranchRow) => {
+                              const pid = record.projectId
+                              const bname = record.name
+                              return (
+                                <Space size="small">
+                                  <Tooltip title="以此为基础创建分支">
+                                    <Button
+                                      size="small"
+                                      icon={<PlusOutlined />}
+                                      onClick={() => openCreateModal(pid, bname)}
+                                    />
+                                  </Tooltip>
+                                </Space>
+                              )
+                            }
                           }
                         ]}
                       />
@@ -309,7 +329,8 @@ const BranchTable: React.FC = () => {
       >
         <div style={{ marginTop: 8 }}>
           <div style={{ marginBottom: 8 }}>
-            基于分支：<Tag>{createBaseBranch}</Tag>
+            {createBaseBranch.startsWith('origin/') ? '基于远程分支：' : '基于分支：'}
+            <Tag>{createBaseBranch}</Tag>
           </div>
           <Input
             placeholder="请输入新分支名称"
