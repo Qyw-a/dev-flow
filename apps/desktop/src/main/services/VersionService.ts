@@ -35,6 +35,10 @@ export class VersionService {
     return readVersions()
   }
 
+  static listByBizProjectId(bizProjectId: string): Version[] {
+    return readVersions().filter(v => v.bizProjectId === bizProjectId)
+  }
+
   static create(version: Omit<Version, 'id' | 'createdAt'>): Version {
     const versions = readVersions()
     const newVersion: Version = {

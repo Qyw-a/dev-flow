@@ -7,6 +7,10 @@ export function registerTicketIpc(): void {
     return TicketService.list()
   })
 
+  ipcMain.handle('ticket:listByBizProjectId', (_, bizProjectId: string) => {
+    return TicketService.listByBizProjectId(bizProjectId)
+  })
+
   ipcMain.handle('ticket:create', async (_, ticket: Omit<Ticket, 'id' | 'createdAt'>) => {
     return TicketService.create(ticket)
   })

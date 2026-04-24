@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { Button, Input, Space, Modal, Checkbox, Select, message, Tag } from 'antd'
+import { Button, Input, Space, Modal, Checkbox, Select, message, Tag, Tooltip } from 'antd'
 import {
   PlusOutlined,
   MergeCellsOutlined,
@@ -179,31 +179,31 @@ const BatchToolbar: React.FC = () => {
   return (
     <div style={{ marginBottom: 12, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
       <Space>
-        <Button icon={<CloudDownloadOutlined />} onClick={handleBatchFetch}>
-          批量 Fetch
-        </Button>
-        <Button icon={<ImportOutlined />} onClick={handleBatchPull}>
-          批量 Pull
-        </Button>
+        <Tooltip title="批量 Fetch">
+          <Button size="small" icon={<CloudDownloadOutlined />} onClick={handleBatchFetch} />
+        </Tooltip>
+        <Tooltip title="批量 Pull">
+          <Button size="small" icon={<ImportOutlined />} onClick={handleBatchPull} />
+        </Tooltip>
       </Space>
       {viewMode === 'project' ? (
         <>
           <Space>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal('create')}>
-              批量创建
-            </Button>
-            <Button icon={<CloudUploadOutlined />} onClick={() => openModal('push')}>
-              批量推送
-            </Button>
-            <Button icon={<MergeCellsOutlined />} onClick={() => openModal('merge')}>
-              批量合并
-            </Button>
-            <Button icon={<SwapOutlined />} onClick={() => openModal('checkout')}>
-              批量切换
-            </Button>
-            <Button danger icon={<DeleteOutlined />} onClick={() => openModal('delete')}>
-              批量删除
-            </Button>
+            <Tooltip title="批量创建">
+              <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => openModal('create')} />
+            </Tooltip>
+            <Tooltip title="批量推送">
+              <Button size="small" icon={<CloudUploadOutlined />} onClick={() => openModal('push')} />
+            </Tooltip>
+            <Tooltip title="批量合并">
+              <Button size="small" icon={<MergeCellsOutlined />} onClick={() => openModal('merge')} />
+            </Tooltip>
+            <Tooltip title="批量切换">
+              <Button size="small" icon={<SwapOutlined />} onClick={() => openModal('checkout')} />
+            </Tooltip>
+            <Tooltip title="批量删除">
+              <Button danger size="small" icon={<DeleteOutlined />} onClick={() => openModal('delete')} />
+            </Tooltip>
           </Space>
 
           {allSelectedBranchList.length > 0 && (
@@ -223,9 +223,9 @@ const BatchToolbar: React.FC = () => {
       ) : (
         <>
           <Space>
-            <Button type="primary" icon={<ClusterOutlined />} onClick={() => openModal('mergeTo')}>
-              合并到分支
-            </Button>
+            <Tooltip title="合并到分支">
+              <Button type="primary" size="small" icon={<ClusterOutlined />} onClick={() => openModal('mergeTo')} />
+            </Tooltip>
           </Space>
 
           {selectedPublicBranches.length > 0 && (

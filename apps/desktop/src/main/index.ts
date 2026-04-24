@@ -1,9 +1,11 @@
 import { app, BrowserWindow, nativeImage } from 'electron'
 import path from 'path'
 import { registerProjectIpc } from './ipc/project'
+import { registerBizProjectIpc } from './ipc/bizProject'
 import { registerGitIpc } from './ipc/git'
 import { registerTicketIpc } from './ipc/ticket'
 import { registerVersionIpc } from './ipc/version'
+import { registerWorkflowConfigIpc } from './ipc/workflowConfig'
 
 function getIconPath(): string | undefined {
   if (process.platform === 'win32') {
@@ -51,9 +53,11 @@ function createWindow(): BrowserWindow {
 
 app.whenReady().then(() => {
   registerProjectIpc()
+  registerBizProjectIpc()
   registerGitIpc()
   registerTicketIpc()
   registerVersionIpc()
+  registerWorkflowConfigIpc()
   createWindow()
 
   if (process.platform === 'darwin') {

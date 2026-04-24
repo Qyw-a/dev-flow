@@ -39,6 +39,7 @@ const PublicBranchView: React.FC = () => {
     mergeBranch,
     pushBranch,
     deleteBranch,
+    deleteRemoteBranch,
     checkoutBranch
   } = useGitOps()
 
@@ -49,6 +50,11 @@ const PublicBranchView: React.FC = () => {
   const [createBaseBranch, setCreateBaseBranch] = useState('')
   const [newBranchName, setNewBranchName] = useState('')
   const [batchCreateRows, setBatchCreateRows] = useState<BranchProjectRow[] | null>(null)
+
+  const [deleteRemoteModalOpen, setDeleteRemoteModalOpen] = useState(false)
+  const [deleteRemoteProjectId, setDeleteRemoteProjectId] = useState('')
+  const [deleteRemoteBranchName, setDeleteRemoteBranchName] = useState('')
+  const [deleteWithLocal, setDeleteWithLocal] = useState(false)
 
   const selectedProjects = projects.filter(p => selectedProjectIds.includes(p.id))
 
@@ -124,6 +130,33 @@ const PublicBranchView: React.FC = () => {
       await deleteBranch(projectId, bname)
     } finally {
       hide()
+    }
+  }
+
+  const openDeleteRemoteModal = (projectId: string, bname: string) => {
+    setDeleteRemoteProjectId(projectId)
+    setDeleteRemoteBranchName(bname)
+    setDeleteWithLocal(false)
+    setDeleteRemoteModalOpen(true)
+  }
+
+  const handleDeleteRemoteConfirm = async () => {
+    const pid = deleteRemoteProjectId
+    const bname = deleteRemoteBranchName
+    const localName = bname.replace(/^origin\//, '')
+    const hide = message.loading('正在删除远程分支...', 0)
+    try {
+      const remoteResult = await deleteRemoteBranch(pid, bname)
+      if (remoteResult.success && deleteWithLocal) {
+        const localBranches = branchesMap[pid] || []
+        const hasLocal = localBranches.some(b => b.name === localName)
+        if (hasLocal) {
+          await deleteBranch(pid, localName)
+        }
+      }
+    } finally {
+      hide()
+      setDeleteRemoteModalOpen(false)
     }
   }
 
@@ -226,12 +259,21 @@ const PublicBranchView: React.FC = () => {
     {
       title: '项目',
       dataIndex: 'projectName',
-      render: (name: string, record: BranchProjectRow) => (
-        <Space>
-          <span style={{ fontWeight: 500 }}>{name}</span>
-          {record.current && <Tag color="cyan">当前</Tag>}
-        </Space>
-      )
+      render: (name: string, record: BranchProjectRow) => {
+        const remoteNames = (remoteBranchesMap[record.projectId] || []).map(b => b.name)
+        const hasRemote = remoteNames.includes(`origin/${record.branchName}`)
+        return (
+          <Space>
+            <span style={{ fontWeight: 500 }}>{name}</span>
+            {record.current && <Tag color="cyan">当前</Tag>}
+            {hasRemote ? (
+              <Tag color="success" style={{ fontSize: 11 }}>已同步</Tag>
+            ) : (
+              <Tag color="warning" style={{ fontSize: 11 }}>未推送</Tag>
+            )}
+          </Space>
+        )
+      }
     },
     {
       title: '最新提交',
@@ -304,7 +346,35 @@ const PublicBranchView: React.FC = () => {
   ]
 
   const remoteColumns = [
-    ...baseColumns,
+    {
+      title: '项目',
+      dataIndex: 'projectName',
+      render: (name: string, record: BranchProjectRow) => {
+        const localNames = (branchesMap[record.projectId] || []).map(b => b.name)
+        const branchName = record.branchName.replace(/^origin\//, '')
+        const hasLocal = localNames.includes(branchName)
+        return (
+          <Space>
+            <span style={{ fontWeight: 500 }}>{name}</span>
+            {hasLocal ? (
+              <Tag color="success" style={{ fontSize: 11 }}>本地存在</Tag>
+            ) : (
+              <Tag color="blue" style={{ fontSize: 11 }}>仅远程</Tag>
+            )}
+          </Space>
+        )
+      }
+    },
+    {
+      title: '最新提交',
+      render: (_: any, record: BranchProjectRow) => (
+        <div>
+          <div style={{ fontSize: 12, color: '#888' }}>{record.commit}</div>
+          <div style={{ fontSize: 12 }}>{record.label}</div>
+          <div style={{ fontSize: 11, color: '#aaa' }}>{record.date}</div>
+        </div>
+      )
+    },
     {
       title: '操作',
       key: 'action',
@@ -320,6 +390,9 @@ const PublicBranchView: React.FC = () => {
                 icon={<PlusOutlined />}
                 onClick={() => openCreateModal(pid, bname)}
               />
+            </Tooltip>
+            <Tooltip title="删除远程分支">
+              <Button size="small" danger icon={<DeleteOutlined />} onClick={() => openDeleteRemoteModal(pid, bname)} />
             </Tooltip>
           </Space>
         )
@@ -481,6 +554,26 @@ const PublicBranchView: React.FC = () => {
             onPressEnter={handleCreateConfirm}
             autoFocus
           />
+        </div>
+      </Modal>
+
+      <Modal
+        title="确认删除远程分支"
+        open={deleteRemoteModalOpen}
+        onOk={handleDeleteRemoteConfirm}
+        onCancel={() => setDeleteRemoteModalOpen(false)}
+        okText="删除"
+        cancelText="取消"
+        okButtonProps={{ danger: true }}
+      >
+        <div style={{ marginTop: 8 }}>
+          <p>确认删除远程分支 <Tag>{deleteRemoteBranchName}</Tag> ？</p>
+          <Checkbox
+            checked={deleteWithLocal}
+            onChange={(e) => setDeleteWithLocal(e.target.checked)}
+          >
+            同时删除同名本地分支
+          </Checkbox>
         </div>
       </Modal>
     </>

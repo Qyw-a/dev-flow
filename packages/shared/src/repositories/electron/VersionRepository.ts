@@ -6,6 +6,10 @@ export class ElectronVersionRepository implements VersionRepository {
     return window.api.version.list()
   }
 
+  async listByBizProjectId(bizProjectId: string): Promise<Version[]> {
+    return window.api.version.listByBizProjectId(bizProjectId)
+  }
+
   async create(version: Omit<Version, 'id' | 'createdAt'>): Promise<Version> {
     return window.api.version.create(version)
   }

@@ -1,23 +1,29 @@
 import React, { useState, useEffect } from 'react'
 import { Modal, Input, Select, message } from 'antd'
-import { Ticket, TicketStatus, TicketPriority } from '@branch-manager/shared'
-import { useStore } from '../stores/useStore'
+import { Ticket, TicketPriority, BizProject } from '@branch-manager/shared'
+import { useWorkflowConfigs } from '../hooks/useWorkflowConfigs'
 
 interface Props {
   open: boolean
   ticket: Ticket | null
+  bizProjectId: string
+  defaultVersionId?: string
+  bizProjects: BizProject[]
+  versions: import('@branch-manager/shared').Version[]
   onCancel: () => void
   onConfirm: (values: Omit<Ticket, 'id' | 'createdAt'>) => void
 }
 
-const TicketCreateModal: React.FC<Props> = ({ open, ticket, onCancel, onConfirm }) => {
+const TicketCreateModal: React.FC<Props> = ({ open, ticket, bizProjectId, defaultVersionId, bizProjects, versions, onCancel, onConfirm }) => {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [status, setStatus] = useState<TicketStatus>('todo')
+  const [status, setStatus] = useState<string>('todo')
   const [priority, setPriority] = useState<TicketPriority>('medium')
   const [versionId, setVersionId] = useState<string | undefined>(undefined)
+  const [selectedBizProjectId, setSelectedBizProjectId] = useState<string>(bizProjectId)
+  const [statusOptions, setStatusOptions] = useState<{ label: string; value: string }[]>([])
   const isEdit = !!ticket
-  const { versions } = useStore()
+  const { getByBizProjectId } = useWorkflowConfigs()
 
   useEffect(() => {
     if (ticket) {
@@ -26,14 +32,27 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, onCancel, onConfirm 
       setStatus(ticket.status)
       setPriority(ticket.priority)
       setVersionId(ticket.versionId)
+      setSelectedBizProjectId(ticket.bizProjectId)
     } else {
       setTitle('')
       setDescription('')
-      setStatus('todo')
       setPriority('medium')
-      setVersionId(undefined)
+      setVersionId(defaultVersionId)
+      setSelectedBizProjectId(bizProjectId)
     }
-  }, [ticket, open])
+  }, [ticket, open, bizProjectId, defaultVersionId])
+
+  // 动态加载工作流状态选项
+  useEffect(() => {
+    if (!open || !selectedBizProjectId) return
+    getByBizProjectId(selectedBizProjectId).then(config => {
+      const steps = [...config.steps].sort((a, b) => a.order - b.order)
+      setStatusOptions(steps.map(s => ({ label: s.name, value: s.id })))
+      if (!ticket) {
+        setStatus(steps[0]?.id || 'todo')
+      }
+    })
+  }, [open, selectedBizProjectId, getByBizProjectId, ticket])
 
   const handleOk = () => {
     const t = title.trim()
@@ -41,10 +60,23 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, onCancel, onConfirm 
       message.warning('请输入需求标题')
       return
     }
-    onConfirm({ title: t, description: description.trim(), status, priority, versionId: versionId || undefined })
+    if (!selectedBizProjectId) {
+      message.warning('请选择业务项目')
+      return
+    }
+    onConfirm({
+      title: t,
+      description: description.trim(),
+      status,
+      priority,
+      versionId: versionId || undefined,
+      bizProjectId: selectedBizProjectId
+    })
     setTitle('')
     setDescription('')
   }
+
+  const filteredVersions = versions.filter(v => v.bizProjectId === selectedBizProjectId)
 
   return (
     <Modal
@@ -56,6 +88,15 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, onCancel, onConfirm 
       cancelText="取消"
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: 4 }}>业务项目：</label>
+          <Select
+            value={selectedBizProjectId || undefined}
+            onChange={(v) => { setSelectedBizProjectId(v); setVersionId(undefined) }}
+            style={{ width: '100%' }}
+            options={bizProjects.map(b => ({ label: b.name, value: b.id }))}
+          />
+        </div>
         <div>
           <label style={{ display: 'block', marginBottom: 4 }}>标题：</label>
           <Input
@@ -81,12 +122,7 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, onCancel, onConfirm 
               value={status}
               onChange={(v) => setStatus(v)}
               style={{ width: '100%' }}
-              options={[
-                { label: '待开发', value: 'todo' },
-                { label: '开发中', value: 'dev' },
-                { label: '测试中', value: 'test' },
-                { label: '已上线', value: 'done' }
-              ]}
+              options={statusOptions}
             />
           </div>
           <div style={{ flex: 1 }}>
@@ -111,7 +147,7 @@ const TicketCreateModal: React.FC<Props> = ({ open, ticket, onCancel, onConfirm 
             onChange={(v) => setVersionId(v)}
             style={{ width: '100%' }}
             allowClear
-            options={versions.map(v => ({ label: v.name, value: v.id }))}
+            options={filteredVersions.map(v => ({ label: v.name, value: v.id }))}
           />
         </div>
       </div>

@@ -6,6 +6,10 @@ export class ElectronTicketRepository implements TicketRepository {
     return window.api.ticket.list()
   }
 
+  async listByBizProjectId(bizProjectId: string): Promise<Ticket[]> {
+    return window.api.ticket.listByBizProjectId(bizProjectId)
+  }
+
   async create(ticket: Omit<Ticket, 'id' | 'createdAt'>): Promise<Ticket> {
     return window.api.ticket.create(ticket)
   }

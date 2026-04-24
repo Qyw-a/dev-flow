@@ -5,11 +5,12 @@ import { Version, VersionStatus } from '@branch-manager/shared'
 interface Props {
   open: boolean
   version: Version | null
+  bizProjectId: string
   onCancel: () => void
   onConfirm: (values: Omit<Version, 'id' | 'createdAt'>) => void
 }
 
-const VersionCreateModal: React.FC<Props> = ({ open, version, onCancel, onConfirm }) => {
+const VersionCreateModal: React.FC<Props> = ({ open, version, bizProjectId, onCancel, onConfirm }) => {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<VersionStatus>('planning')
@@ -40,7 +41,8 @@ const VersionCreateModal: React.FC<Props> = ({ open, version, onCancel, onConfir
       name: n,
       description: description.trim(),
       status,
-      plannedDate: plannedDate || undefined
+      plannedDate: plannedDate || undefined,
+      bizProjectId
     })
     setName('')
     setDescription('')

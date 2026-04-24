@@ -7,6 +7,10 @@ export function registerVersionIpc(): void {
     return VersionService.list()
   })
 
+  ipcMain.handle('version:listByBizProjectId', (_, bizProjectId: string) => {
+    return VersionService.listByBizProjectId(bizProjectId)
+  })
+
   ipcMain.handle('version:create', async (_, version: Omit<Version, 'id' | 'createdAt'>) => {
     return VersionService.create(version)
   })

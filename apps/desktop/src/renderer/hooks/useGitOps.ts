@@ -87,6 +87,14 @@ export function useGitOps() {
     return result
   }, [projects, logResult, refreshBranches])
 
+  const deleteRemoteBranch = useCallback(async (projectId: string, branchName: string) => {
+    const result = await repositories.git.deleteRemoteBranch(projectId, branchName)
+    const project = projects.find(p => p.id === projectId)
+    logResult(project?.name || projectId, `删除远程分支 ${branchName}`, result)
+    if (result.success) await refreshRemoteBranches(projectId)
+    return result
+  }, [projects, logResult, refreshRemoteBranches])
+
   const checkoutBranch = useCallback(async (projectId: string, branchName: string) => {
     const result = await repositories.git.checkoutBranch(projectId, branchName)
     const project = projects.find(p => p.id === projectId)
@@ -149,6 +157,7 @@ export function useGitOps() {
     mergeBranch,
     pushBranch,
     deleteBranch,
+    deleteRemoteBranch,
     checkoutBranch,
     mergeToBranch,
     fetchRepo,

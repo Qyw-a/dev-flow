@@ -12,6 +12,12 @@ export function useTickets() {
     return list
   }, [setTickets])
 
+  const refreshByBizProjectId = useCallback(async (bizProjectId: string) => {
+    const list = await repositories.ticket.listByBizProjectId(bizProjectId)
+    setTickets(list)
+    return list
+  }, [setTickets])
+
   const create = useCallback(async (ticket: Omit<Ticket, 'id' | 'createdAt'>) => {
     const created = await repositories.ticket.create(ticket)
     setTickets([...tickets, created])
@@ -50,6 +56,7 @@ export function useTickets() {
   return {
     tickets,
     refresh,
+    refreshByBizProjectId,
     create,
     update,
     remove,

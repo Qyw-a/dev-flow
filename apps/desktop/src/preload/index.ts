@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { Project, Ticket, TicketBranchLink, Version } from '@branch-manager/shared'
+import { Project, Ticket, TicketBranchLink, Version, BizProject, WorkflowConfig } from '@branch-manager/shared'
 import { BranchInfo, GitResult, BatchOp } from '@branch-manager/git-core'
 
 const api = {
@@ -7,6 +7,12 @@ const api = {
     list: (): Promise<Project[]> => ipcRenderer.invoke('project:list'),
     add: (path?: string): Promise<Project | null> => ipcRenderer.invoke('project:add', path),
     remove: (id: string): Promise<void> => ipcRenderer.invoke('project:remove', id)
+  },
+  bizProject: {
+    list: (): Promise<BizProject[]> => ipcRenderer.invoke('bizProject:list'),
+    create: (bizProject: Omit<BizProject, 'id' | 'createdAt'>): Promise<BizProject> => ipcRenderer.invoke('bizProject:create', bizProject),
+    update: (id: string, updates: Partial<Omit<BizProject, 'id' | 'createdAt'>>): Promise<BizProject | null> => ipcRenderer.invoke('bizProject:update', id, updates),
+    remove: (id: string): Promise<void> => ipcRenderer.invoke('bizProject:remove', id)
   },
   git: {
     branches: (projectId: string): Promise<BranchInfo[]> => ipcRenderer.invoke('git:branches', projectId),
@@ -19,6 +25,8 @@ const api = {
       ipcRenderer.invoke('git:pushBranch', projectId, branchName),
     deleteBranch: (projectId: string, branchName: string, force?: boolean): Promise<GitResult> =>
       ipcRenderer.invoke('git:deleteBranch', projectId, branchName, force),
+    deleteRemoteBranch: (projectId: string, branchName: string): Promise<GitResult> =>
+      ipcRenderer.invoke('git:deleteRemoteBranch', projectId, branchName),
     checkoutBranch: (projectId: string, branchName: string): Promise<GitResult> =>
       ipcRenderer.invoke('git:checkoutBranch', projectId, branchName),
     mergeToBranch: (projectId: string, sourceBranch: string, targetBranch: string, ff?: boolean): Promise<GitResult> =>
@@ -31,6 +39,7 @@ const api = {
   },
   ticket: {
     list: (): Promise<Ticket[]> => ipcRenderer.invoke('ticket:list'),
+    listByBizProjectId: (bizProjectId: string): Promise<Ticket[]> => ipcRenderer.invoke('ticket:listByBizProjectId', bizProjectId),
     create: (ticket: Omit<Ticket, 'id' | 'createdAt'>): Promise<Ticket> => ipcRenderer.invoke('ticket:create', ticket),
     update: (id: string, updates: Partial<Omit<Ticket, 'id' | 'createdAt'>>): Promise<Ticket | null> => ipcRenderer.invoke('ticket:update', id, updates),
     remove: (id: string): Promise<void> => ipcRenderer.invoke('ticket:remove', id),
@@ -40,9 +49,18 @@ const api = {
   },
   version: {
     list: (): Promise<Version[]> => ipcRenderer.invoke('version:list'),
+    listByBizProjectId: (bizProjectId: string): Promise<Version[]> => ipcRenderer.invoke('version:listByBizProjectId', bizProjectId),
     create: (version: Omit<Version, 'id' | 'createdAt'>): Promise<Version> => ipcRenderer.invoke('version:create', version),
     update: (id: string, updates: Partial<Omit<Version, 'id' | 'createdAt'>>): Promise<Version | null> => ipcRenderer.invoke('version:update', id, updates),
     remove: (id: string): Promise<void> => ipcRenderer.invoke('version:remove', id)
+  },
+  workflowConfig: {
+    list: (): Promise<WorkflowConfig[]> => ipcRenderer.invoke('workflowConfig:list'),
+    getByBizProjectId: (bizProjectId: string): Promise<WorkflowConfig | null> => ipcRenderer.invoke('workflowConfig:getByBizProjectId', bizProjectId),
+    getOrCreateDefault: (bizProjectId: string): Promise<WorkflowConfig> => ipcRenderer.invoke('workflowConfig:getOrCreateDefault', bizProjectId),
+    save: (config: Omit<WorkflowConfig, 'id' | 'createdAt'> & { id?: string }): Promise<WorkflowConfig> => ipcRenderer.invoke('workflowConfig:save', config),
+    remove: (id: string): Promise<void> => ipcRenderer.invoke('workflowConfig:remove', id),
+    removeByBizProjectId: (bizProjectId: string): Promise<void> => ipcRenderer.invoke('workflowConfig:removeByBizProjectId', bizProjectId)
   }
 }
 

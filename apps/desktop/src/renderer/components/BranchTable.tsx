@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Table, Button, Tag, Space, Popconfirm, Tooltip, Modal, Input, message, Card, Tabs } from 'antd'
+import { Table, Button, Tag, Space, Popconfirm, Tooltip, Modal, Input, message, Card, Tabs, Checkbox } from 'antd'
 import {
   PlusOutlined,
   MergeCellsOutlined,
@@ -28,12 +28,17 @@ const BranchTable: React.FC = () => {
     selectedBranches,
     setProjectSelectedBranches
   } = useStore()
-  const { refreshBranches, refreshRemoteBranches, createBranch, mergeBranch, pushBranch, deleteBranch, checkoutBranch } = useGitOps()
+  const { refreshBranches, refreshRemoteBranches, createBranch, mergeBranch, pushBranch, deleteBranch, deleteRemoteBranch, checkoutBranch } = useGitOps()
 
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [createProjectId, setCreateProjectId] = useState('')
   const [createBaseBranch, setCreateBaseBranch] = useState('')
   const [newBranchName, setNewBranchName] = useState('')
+
+  const [deleteRemoteModalOpen, setDeleteRemoteModalOpen] = useState(false)
+  const [deleteRemoteProjectId, setDeleteRemoteProjectId] = useState('')
+  const [deleteRemoteBranchName, setDeleteRemoteBranchName] = useState('')
+  const [deleteWithLocal, setDeleteWithLocal] = useState(false)
 
   const selectedProjects = projects.filter(p => selectedProjectIds.includes(p.id))
 
@@ -122,6 +127,33 @@ const BranchTable: React.FC = () => {
     }
   }
 
+  const openDeleteRemoteModal = (projectId: string, bname: string) => {
+    setDeleteRemoteProjectId(projectId)
+    setDeleteRemoteBranchName(bname)
+    setDeleteWithLocal(false)
+    setDeleteRemoteModalOpen(true)
+  }
+
+  const handleDeleteRemoteConfirm = async () => {
+    const pid = deleteRemoteProjectId
+    const bname = deleteRemoteBranchName
+    const localName = bname.replace(/^origin\//, '')
+    const hide = message.loading('正在删除远程分支...', 0)
+    try {
+      const remoteResult = await deleteRemoteBranch(pid, bname)
+      if (remoteResult.success && deleteWithLocal) {
+        const localBranches = branchesMap[pid] || []
+        const hasLocal = localBranches.some(b => b.name === localName)
+        if (hasLocal) {
+          await deleteBranch(pid, localName)
+        }
+      }
+    } finally {
+      hide()
+      setDeleteRemoteModalOpen(false)
+    }
+  }
+
   if (selectedProjects.length === 0) {
     return (
       <div style={{ textAlign: 'center', paddingTop: 60, color: '#888' }}>
@@ -157,16 +189,16 @@ const BranchTable: React.FC = () => {
                 </Space>
               }
               extra={
-                <Button
-                  size="small"
-                  icon={<ReloadOutlined />}
-                  onClick={() => {
-                    refreshBranches(project.id)
-                    refreshRemoteBranches(project.id)
-                  }}
-                >
-                  刷新
-                </Button>
+                <Tooltip title="刷新">
+                  <Button
+                    size="small"
+                    icon={<ReloadOutlined />}
+                    onClick={() => {
+                      refreshBranches(project.id)
+                      refreshRemoteBranches(project.id)
+                    }}
+                  />
+                </Tooltip>
               }
             >
               <Tabs
@@ -189,18 +221,27 @@ const BranchTable: React.FC = () => {
                           {
                             title: '分支',
                             key: 'name',
-                            render: (_: any, record: BranchRow) => (
-                              <Space>
-                                <BranchesOutlined />
-                                {record.current ? (
-                                  <Tag color="blue">{record.name}</Tag>
-                                ) : (
-                                  <span>{record.name}</span>
-                                )}
-                                {record.current && <Tag color="cyan">当前</Tag>}
-                                {getTicketTag(record.projectId, record.name)}
-                              </Space>
-                            )
+                            render: (_: any, record: BranchRow) => {
+                              const remoteNames = (remoteBranchesMap[record.projectId] || []).map(b => b.name)
+                              const hasRemote = remoteNames.includes(`origin/${record.name}`)
+                              return (
+                                <Space>
+                                  <BranchesOutlined />
+                                  {record.current ? (
+                                    <Tag color="blue">{record.name}</Tag>
+                                  ) : (
+                                    <span>{record.name}</span>
+                                  )}
+                                  {record.current && <Tag color="cyan">当前</Tag>}
+                                  {hasRemote ? (
+                                    <Tag color="success" style={{ fontSize: 11 }}>已同步</Tag>
+                                  ) : (
+                                    <Tag color="warning" style={{ fontSize: 11 }}>未推送</Tag>
+                                  )}
+                                  {getTicketTag(record.projectId, record.name)}
+                                </Space>
+                              )
+                            }
                           },
                           {
                             title: '最新提交',
@@ -291,11 +332,18 @@ const BranchTable: React.FC = () => {
                               const parts = record.name.split('/')
                               const remote = parts[0]
                               const branchName = parts.slice(1).join('/')
+                              const localNames = (branchesMap[record.projectId] || []).map(b => b.name)
+                              const hasLocal = localNames.includes(branchName)
                               return (
                                 <Space>
                                   <BranchesOutlined />
                                   <span style={{ color: '#888' }}>{remote}/</span>
                                   <span>{branchName}</span>
+                                  {hasLocal ? (
+                                    <Tag color="success" style={{ fontSize: 11 }}>本地存在</Tag>
+                                  ) : (
+                                    <Tag color="blue" style={{ fontSize: 11 }}>仅远程</Tag>
+                                  )}
                                 </Space>
                               )
                             }
@@ -327,6 +375,9 @@ const BranchTable: React.FC = () => {
                                       icon={<PlusOutlined />}
                                       onClick={() => openCreateModal(pid, bname)}
                                     />
+                                  </Tooltip>
+                                  <Tooltip title="删除远程分支">
+                                    <Button size="small" danger icon={<DeleteOutlined />} onClick={() => openDeleteRemoteModal(pid, bname)} />
                                   </Tooltip>
                                 </Space>
                               )
@@ -363,6 +414,26 @@ const BranchTable: React.FC = () => {
             onPressEnter={handleCreateConfirm}
             autoFocus
           />
+        </div>
+      </Modal>
+
+      <Modal
+        title="确认删除远程分支"
+        open={deleteRemoteModalOpen}
+        onOk={handleDeleteRemoteConfirm}
+        onCancel={() => setDeleteRemoteModalOpen(false)}
+        okText="删除"
+        cancelText="取消"
+        okButtonProps={{ danger: true }}
+      >
+        <div style={{ marginTop: 8 }}>
+          <p>确认删除远程分支 <Tag>{deleteRemoteBranchName}</Tag> ？</p>
+          <Checkbox
+            checked={deleteWithLocal}
+            onChange={(e) => setDeleteWithLocal(e.target.checked)}
+          >
+            同时删除同名本地分支
+          </Checkbox>
         </div>
       </Modal>
     </>

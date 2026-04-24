@@ -98,6 +98,18 @@ export class GitService {
     }
   }
 
+  static async deleteRemoteBranch(projectPath: string, branchName: string): Promise<GitResult> {
+    const git = getGit(projectPath)
+    try {
+      const remote = branchName.split('/')[0]
+      const name = branchName.split('/').slice(1).join('/')
+      await git.raw(['push', remote, '--delete', name])
+      return { success: true, message: `远程分支 ${branchName} 删除成功`, projectId: '' }
+    } catch (err: any) {
+      return { success: false, message: err.message || String(err), projectId: '' }
+    }
+  }
+
   static async checkoutBranch(projectPath: string, branchName: string): Promise<GitResult> {
     const git = getGit(projectPath)
     try {

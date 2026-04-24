@@ -54,6 +54,10 @@ export class TicketService {
     return readTickets()
   }
 
+  static listByBizProjectId(bizProjectId: string): Ticket[] {
+    return readTickets().filter(t => t.bizProjectId === bizProjectId)
+  }
+
   static create(ticket: Omit<Ticket, 'id' | 'createdAt'>): Ticket {
     const tickets = readTickets()
     const newTicket: Ticket = {

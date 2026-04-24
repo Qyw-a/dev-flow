@@ -12,6 +12,12 @@ export function useVersions() {
     return list
   }, [setVersions])
 
+  const refreshByBizProjectId = useCallback(async (bizProjectId: string) => {
+    const list = await repositories.version.listByBizProjectId(bizProjectId)
+    setVersions(list)
+    return list
+  }, [setVersions])
+
   const create = useCallback(async (version: Omit<Version, 'id' | 'createdAt'>) => {
     const created = await repositories.version.create(version)
     setVersions([...versions, created])
@@ -31,5 +37,5 @@ export function useVersions() {
     setVersions(versions.filter(v => v.id !== id))
   }, [versions, setVersions])
 
-  return { versions, refresh, create, update, remove }
+  return { versions, refresh, refreshByBizProjectId, create, update, remove }
 }
