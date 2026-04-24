@@ -1,34 +1,13 @@
 {
-  "name": "branch-manager",
+  "name": "@branch-manager/monorepo",
+  "private": true,
   "version": "1.0.0",
-  "description": "Electron Git Branch Manager - manage multiple project branches",
-  "main": "./out/main/index.js",
-  "author": "",
-  "license": "MIT",
+  "description": "Branch Manager monorepo",
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "npm run typecheck && electron-vite build",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "preview": "electron-vite preview",
-    "postinstall": "electron-builder install-app-deps"
-  },
-  "dependencies": {
-    "simple-git": "^3.22.0",
-    "antd": "^5.14.0",
-    "zustand": "^4.5.1",
-    "electron-log": "^5.1.1"
-  },
-  "devDependencies": {
-    "@types/node": "^20.11.17",
-    "@types/react": "^18.2.55",
-    "@types/react-dom": "^18.2.19",
-    "@vitejs/plugin-react": "^4.2.1",
-    "electron": "^29.0.0",
-    "electron-builder": "^24.12.0",
-    "electron-vite": "^2.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "typescript": "^5.3.3",
-    "vite": "^5.1.3"
+    "dev": "pnpm --filter @branch-manager/desktop dev",
+    "build": "pnpm --filter @branch-manager/desktop build",
+    "typecheck": "pnpm --filter @branch-manager/desktop typecheck",
+    "preview": "pnpm --filter @branch-manager/desktop preview",
+    "postinstall": "pnpm --filter @branch-manager/desktop postinstall"
   }
 }

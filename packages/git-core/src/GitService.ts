@@ -1,5 +1,5 @@
 import simpleGit, { SimpleGit } from 'simple-git'
-import { BranchInfo, GitResult, BatchOp } from '../types'
+import { BranchInfo, GitResult, BatchOp } from './types'
 
 function getGit(path: string): SimpleGit {
   return simpleGit(path)

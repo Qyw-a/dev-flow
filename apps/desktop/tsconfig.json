@@ -17,8 +17,10 @@
     "baseUrl": ".",
     "paths": {
       "@renderer/*": ["src/renderer/*"],
-      "@main/*": ["src/main/*"]
+      "@main/*": ["src/main/*"],
+      "@branch-manager/git-core": ["../../packages/git-core/src/index.ts"],
+      "@branch-manager/shared": ["../../packages/shared/src/index.ts"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/main/types.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

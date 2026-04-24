@@ -1,7 +1,6 @@
 import { ipcMain } from 'electron'
-import { GitService } from '../services/GitService'
+import { GitService, BatchOp } from '@branch-manager/git-core'
 import { ProjectService } from '../services/ProjectService'
-import { BatchOp } from '../types'
 
 export function registerGitIpc(): void {
   ipcMain.handle('git:branches', async (_, projectId: string) => {

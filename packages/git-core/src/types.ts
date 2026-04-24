@@ -1,10 +1,3 @@
-export interface Project {
-  id: string
-  name: string
-  path: string
-  isGitRepo: boolean
-}
-
 export interface BranchInfo {
   name: string
   current: boolean

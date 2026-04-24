@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { Project } from '../types'
+import { Project } from '@branch-manager/shared'
 
 const CONFIG_DIR = path.join(os.homedir(), '.branch-manager')
 const CONFIG_FILE = path.join(CONFIG_DIR, 'projects.json')

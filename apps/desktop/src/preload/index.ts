@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { Project, BranchInfo, GitResult, BatchOp } from '../main/types'
+import { Project } from '@branch-manager/shared'
+import { BranchInfo, GitResult, BatchOp } from '@branch-manager/git-core'
 
 const api = {
   project: {
