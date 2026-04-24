@@ -110,6 +110,55 @@ const PublicBranchView: React.FC = () => {
     }
   }
 
+  const handleBatchCheckout = async (rows: BranchProjectRow[]) => {
+    const hide = message.loading('正在批量切换分支...', 0)
+    try {
+      for (const row of rows) {
+        if (!row.current) {
+          await checkoutBranch(row.projectId, row.branchName)
+        }
+      }
+    } finally {
+      hide()
+    }
+  }
+
+  const handleBatchPush = async (rows: BranchProjectRow[]) => {
+    const hide = message.loading('正在批量推送分支...', 0)
+    try {
+      for (const row of rows) {
+        await pushBranch(row.projectId, row.branchName)
+      }
+    } finally {
+      hide()
+    }
+  }
+
+  const handleBatchDelete = async (rows: BranchProjectRow[]) => {
+    const hide = message.loading('正在批量删除分支...', 0)
+    try {
+      for (const row of rows) {
+        if (!row.current) {
+          await deleteBranch(row.projectId, row.branchName)
+        }
+      }
+    } finally {
+      hide()
+    }
+  }
+
+  const handleBatchCheckoutRemote = async (rows: BranchProjectRow[]) => {
+    const hide = message.loading('正在批量检出远程分支...', 0)
+    try {
+      for (const row of rows) {
+        const localName = row.branchName.replace(/^origin\//, '')
+        await createBranch(row.projectId, localName, row.branchName)
+      }
+    } finally {
+      hide()
+    }
+  }
+
   const localData = useMemo(() => {
     const map = new Map<string, BranchProjectRow[]>()
     selectedProjects.forEach(project => {
@@ -302,6 +351,46 @@ const PublicBranchView: React.FC = () => {
                   )}
                   <Tag color="blue">{projectCount} 个项目</Tag>
                 </Space>
+              }
+              extra={
+                isRemote ? (
+                  <Space size="small">
+                    <Tooltip title="批量检出到本地">
+                      <Button
+                        size="small"
+                        icon={<SwapOutlined />}
+                        onClick={() => handleBatchCheckoutRemote(rows)}
+                      />
+                    </Tooltip>
+                  </Space>
+                ) : (
+                  <Space size="small">
+                    <Tooltip title="批量切换到该分支">
+                      <Button
+                        size="small"
+                        icon={<SwapOutlined />}
+                        onClick={() => handleBatchCheckout(rows)}
+                      />
+                    </Tooltip>
+                    <Tooltip title="批量推送">
+                      <Button
+                        size="small"
+                        icon={<CloudUploadOutlined />}
+                        onClick={() => handleBatchPush(rows)}
+                      />
+                    </Tooltip>
+                    <Popconfirm
+                      title="确认批量删除分支？"
+                      description={`将在 ${projectCount} 个项目中删除分支 ${name}`}
+                      okText="删除"
+                      cancelText="取消"
+                      okButtonProps={{ danger: true }}
+                      onConfirm={() => handleBatchDelete(rows)}
+                    >
+                      <Button size="small" danger icon={<DeleteOutlined />} />
+                    </Popconfirm>
+                  </Space>
+                )
               }
             >
               <Table<BranchProjectRow>
