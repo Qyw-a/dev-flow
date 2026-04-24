@@ -21,6 +21,8 @@ const BranchTable: React.FC = () => {
   const {
     branchesMap,
     remoteBranchesMap,
+    ticketBranchesMap,
+    tickets,
     loadingBranches,
     selectedProjectIds,
     selectedBranches,
@@ -34,6 +36,27 @@ const BranchTable: React.FC = () => {
   const [newBranchName, setNewBranchName] = useState('')
 
   const selectedProjects = projects.filter(p => selectedProjectIds.includes(p.id))
+
+  const branchTicketMap = React.useMemo(() => {
+    const map = new Map<string, string>()
+    Object.entries(ticketBranchesMap).forEach(([ticketId, links]) => {
+      links.forEach(link => {
+        map.set(`${link.projectId}:${link.branchName}`, ticketId)
+      })
+    })
+    return map
+  }, [ticketBranchesMap])
+
+  const getTicketTag = (projectId: string, branchName: string) => {
+    const ticketId = branchTicketMap.get(`${projectId}:${branchName}`)
+    if (!ticketId) return null
+    const ticket = tickets.find(t => t.id === ticketId)
+    return ticket ? (
+      <Tag color="purple" style={{ fontSize: 11 }}>
+        {ticket.id}
+      </Tag>
+    ) : null
+  }
 
   useEffect(() => {
     selectedProjects.forEach(p => {
@@ -175,6 +198,7 @@ const BranchTable: React.FC = () => {
                                   <span>{record.name}</span>
                                 )}
                                 {record.current && <Tag color="cyan">当前</Tag>}
+                                {getTicketTag(record.projectId, record.name)}
                               </Space>
                             )
                           },

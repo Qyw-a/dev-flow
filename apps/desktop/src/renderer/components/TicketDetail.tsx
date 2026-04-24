@@ -6,6 +6,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   LinkOutlined,
+  PlusOutlined,
   SwapOutlined,
   MergeCellsOutlined,
   CloudUploadOutlined,
@@ -40,10 +41,14 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onEdit }) => {
   const { projects } = useProjects()
   const { remove, refreshBranches, linkBranch, unlinkBranch } = useTickets()
   const { branchesMap, ticketBranchesMap } = useStore()
-  const { checkoutBranch, mergeBranch, pushBranch } = useGitOps()
+  const { createBranch, checkoutBranch, mergeBranch, pushBranch } = useGitOps()
 
   const [linkProjectId, setLinkProjectId] = useState('')
   const [linkBranchName, setLinkBranchName] = useState('')
+
+  const [createProjectId, setCreateProjectId] = useState('')
+  const [createBaseBranch, setCreateBaseBranch] = useState('')
+  const [newBranchName, setNewBranchName] = useState('')
 
   const links = ticketBranchesMap[ticket.id] || []
 
@@ -60,6 +65,15 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onEdit }) => {
     return (branchesMap[linkProjectId] || []).map(b => b.name)
   }, [linkProjectId, branchesMap])
 
+  const createAvailableProjects = useMemo(() => {
+    return projects.filter(p => p.isGitRepo && !links.some(l => l.projectId === p.id))
+  }, [projects, links])
+
+  const createAvailableBranches = useMemo(() => {
+    if (!createProjectId) return []
+    return (branchesMap[createProjectId] || []).map(b => b.name)
+  }, [createProjectId, branchesMap])
+
   const handleLink = async () => {
     if (!linkProjectId || !linkBranchName) {
       message.warning('请选择项目和分支')
@@ -69,6 +83,22 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onEdit }) => {
     setLinkProjectId('')
     setLinkBranchName('')
     message.success('关联成功')
+  }
+
+  const handleCreateAndLink = async () => {
+    const name = newBranchName.trim()
+    if (!createProjectId || !name) {
+      message.warning('请选择项目并输入分支名称')
+      return
+    }
+    const result = await createBranch(createProjectId, name, createBaseBranch || undefined)
+    if (result.success) {
+      await linkBranch(ticket.id, createProjectId, name)
+      setCreateProjectId('')
+      setCreateBaseBranch('')
+      setNewBranchName('')
+      message.success('分支创建并关联成功')
+    }
   }
 
   const handleCheckout = async (projectId: string, branchName: string) => {
@@ -198,6 +228,37 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onEdit }) => {
           <Button type="primary" icon={<LinkOutlined />} onClick={handleLink} disabled={!linkProjectId || !linkBranchName}>
             关联
           </Button>
+        </div>
+
+        <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px dashed #f0f0f0' }}>
+          <div style={{ marginBottom: 8, fontWeight: 500 }}>创建并关联新分支</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Select
+              placeholder="选择项目"
+              value={createProjectId || undefined}
+              onChange={(v) => { setCreateProjectId(v); setCreateBaseBranch(''); setNewBranchName('') }}
+              style={{ width: 160 }}
+              options={createAvailableProjects.map(p => ({ label: p.name, value: p.id }))}
+            />
+            <Select
+              placeholder="基于分支（可选）"
+              value={createBaseBranch || undefined}
+              onChange={(v) => setCreateBaseBranch(v)}
+              style={{ width: 160 }}
+              options={createAvailableBranches.map(n => ({ label: n, value: n }))}
+              disabled={!createProjectId}
+              allowClear
+            />
+            <input
+              placeholder="新分支名称"
+              value={newBranchName}
+              onChange={(e) => setNewBranchName(e.target.value)}
+              style={{ width: 160, padding: '4px 8px', border: '1px solid #d9d9d9', borderRadius: 4 }}
+            />
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateAndLink} disabled={!createProjectId || !newBranchName.trim()}>
+              创建并关联
+            </Button>
+          </div>
         </div>
       </Card>
     </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Layout, message } from 'antd'
 import AppHeader from './components/AppHeader'
 import BranchManagerView from './components/BranchManagerView'
+import WorkflowView from './components/WorkflowView'
 import TicketList from './components/TicketList'
 import TicketDetail from './components/TicketDetail'
 import TicketCreateModal from './components/TicketCreateModal'
@@ -70,11 +71,7 @@ const TicketView: React.FC = () => {
   )
 }
 
-const WorkflowView: React.FC = () => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#888' }}>
-    工作流配置模块开发中...
-  </div>
-)
+
 
 const App: React.FC = () => {
   const { refresh } = useProjects()
