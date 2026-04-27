@@ -8,7 +8,11 @@
     "build": "pnpm --filter @dev-flow/desktop build",
     "typecheck": "pnpm --filter @dev-flow/desktop typecheck",
     "preview": "pnpm --filter @dev-flow/desktop preview",
-    "postinstall": "pnpm --filter @dev-flow/desktop postinstall"
+    "postinstall": "pnpm --filter @dev-flow/desktop postinstall",
+    "dist": "pnpm --filter @dev-flow/desktop dist",
+    "dist:mac": "pnpm --filter @dev-flow/desktop dist:mac",
+    "dist:win": "pnpm --filter @dev-flow/desktop dist:win",
+    "dist:linux": "pnpm --filter @dev-flow/desktop dist:linux"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

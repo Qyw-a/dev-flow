@@ -19,9 +19,24 @@ importers:
       '@dev-flow/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@kwsites/file-exists':
+        specifier: ^1.1.1
+        version: 1.1.1
+      '@kwsites/promise-deferred':
+        specifier: ^1.1.1
+        version: 1.1.1
+      '@simple-git/args-pathspec':
+        specifier: ^1.0.3
+        version: 1.0.3
+      '@simple-git/argv-parser':
+        specifier: ^1.1.0
+        version: 1.1.1
       antd:
         specifier: ^5.14.0
         version: 5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      debug:
+        specifier: ^4.4.0
+        version: 4.4.3
       electron-log:
         specifier: ^5.1.1
         version: 5.4.3
