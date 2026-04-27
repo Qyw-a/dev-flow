@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Modal, Input, Select, message } from 'antd'
-import { Version, VersionStatus } from '@branch-manager/shared'
+import { Version, VersionStatus } from '@dev-flow/shared'
 
 interface Props {
   open: boolean

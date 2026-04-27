@@ -2,7 +2,7 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-const workspacePackages = ['@branch-manager/git-core', '@branch-manager/shared']
+const workspacePackages = ['@dev-flow/git-core', '@dev-flow/shared']
 
 export default defineConfig({
   main: {
@@ -18,8 +18,8 @@ export default defineConfig({
     resolve: {
       alias: {
         '@main': path.resolve(__dirname, 'src/main'),
-        '@branch-manager/git-core': path.resolve(__dirname, '../../packages/git-core/src/index.ts'),
-        '@branch-manager/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts')
+        '@dev-flow/git-core': path.resolve(__dirname, '../../packages/git-core/src/index.ts'),
+        '@dev-flow/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts')
       }
     }
   },
@@ -35,8 +35,8 @@ export default defineConfig({
     },
     resolve: {
       alias: {
-        '@branch-manager/git-core': path.resolve(__dirname, '../../packages/git-core/src/index.ts'),
-        '@branch-manager/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts')
+        '@dev-flow/git-core': path.resolve(__dirname, '../../packages/git-core/src/index.ts'),
+        '@dev-flow/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts')
       }
     }
   },
@@ -54,8 +54,8 @@ export default defineConfig({
     resolve: {
       alias: {
         '@renderer': path.resolve(__dirname, 'src/renderer'),
-        '@branch-manager/git-core': path.resolve(__dirname, '../../packages/git-core/src/index.ts'),
-        '@branch-manager/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts')
+        '@dev-flow/git-core': path.resolve(__dirname, '../../packages/git-core/src/index.ts'),
+        '@dev-flow/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts')
       }
     }
   }

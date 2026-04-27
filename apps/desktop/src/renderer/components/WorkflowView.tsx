@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons'
 import { useStore } from '../stores/useStore'
 import { useWorkflowConfigs } from '../hooks/useWorkflowConfigs'
-import { WorkflowConfig, WorkflowStep, WorkflowStepAction } from '@branch-manager/shared'
+import { WorkflowConfig, WorkflowStep, WorkflowStepAction } from '@dev-flow/shared'
 
 const { Sider, Content } = Layout
 

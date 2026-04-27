@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { VersionService } from '../services/VersionService'
-import { Version } from '@branch-manager/shared'
+import { Version } from '@dev-flow/shared'
 
 export function registerVersionIpc(): void {
   ipcMain.handle('version:list', () => {

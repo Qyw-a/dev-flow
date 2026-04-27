@@ -1,5 +1,5 @@
-import { Project } from '@branch-manager/shared'
-import { BranchInfo, GitResult } from '@branch-manager/git-core'
+import { Project } from '@dev-flow/shared'
+import { BranchInfo, GitResult } from '@dev-flow/git-core'
 
 export type { Project, BranchInfo, GitResult }
 

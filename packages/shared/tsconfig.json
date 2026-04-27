@@ -11,7 +11,7 @@
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
-      "@branch-manager/git-core": ["../git-core/src/index.ts"]
+      "@dev-flow/git-core": ["../git-core/src/index.ts"]
     }
   },
   "include": ["src/**/*"]

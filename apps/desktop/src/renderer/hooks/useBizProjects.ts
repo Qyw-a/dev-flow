@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useStore } from '../stores/useStore'
-import { repositories } from '@branch-manager/shared'
-import { BizProject } from '@branch-manager/shared'
+import { repositories } from '@dev-flow/shared'
+import { BizProject } from '@dev-flow/shared'
 
 export function useBizProjects() {
   const { bizProjects, setBizProjects } = useStore()

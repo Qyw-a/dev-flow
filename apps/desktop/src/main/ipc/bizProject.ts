@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { BizProjectService } from '../services/BizProjectService'
-import { BizProject } from '@branch-manager/shared'
+import { BizProject } from '@dev-flow/shared'
 
 export function registerBizProjectIpc(): void {
   ipcMain.handle('bizProject:list', () => {

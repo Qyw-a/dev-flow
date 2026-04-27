@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { Project, BranchInfo, LogEntry } from '../types'
-import { Ticket, TicketBranchLink, Version, BizProject, WorkflowConfig } from '@branch-manager/shared'
+import { Ticket, TicketBranchLink, Version, BizProject, WorkflowConfig } from '@dev-flow/shared'
 
 type ViewMode = 'project' | 'branch'
 type MainView = 'ticket' | 'branch' | 'workflow' | 'archive'

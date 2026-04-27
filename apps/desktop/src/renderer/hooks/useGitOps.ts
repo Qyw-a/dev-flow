@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useStore } from '../stores/useStore'
-import { repositories } from '@branch-manager/shared'
+import { repositories } from '@dev-flow/shared'
 import { GitResult, LogEntry } from '../types'
 
 export function useGitOps() {

@@ -20,7 +20,7 @@ import { useTickets } from '../hooks/useTickets'
 import { useGitOps } from '../hooks/useGitOps'
 import { useWorkflowConfigs } from '../hooks/useWorkflowConfigs'
 import { useWorkflowActions } from '../hooks/useWorkflowActions'
-import { Ticket, WorkflowConfig } from '@branch-manager/shared'
+import { Ticket, WorkflowConfig } from '@dev-flow/shared'
 
 interface TicketDetailProps {
   ticket: Ticket

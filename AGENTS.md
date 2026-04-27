@@ -61,7 +61,7 @@ branchManager/
 
 - **主进程 (main)**：负责 Git 命令执行、文件系统读写、系统对话框（`dialog.showOpenDialog`）。
 - **预加载脚本 (preload)**：通过 `contextBridge.exposeInMainWorld('api', api)` 将 `ipcRenderer.invoke` 封装成类型安全的 API 暴露给渲染进程。
-- **渲染进程 (renderer)**：React 应用。不直接使用 Electron API，而是通过 `@branch-manager/shared` 中的 `repositories` 工厂调用预加载脚本暴露的方法。
+- **渲染进程 (renderer)**：React 应用。不直接使用 Electron API，而是通过 `@dev-flow/shared` 中的 `repositories` 工厂调用预加载脚本暴露的方法。
 
 IPC 通道命名规范：`domain:action`，例如 `git:createBranch`、`project:list`、`ticket:update`。
 
@@ -111,14 +111,14 @@ pnpm postinstall  # electron-builder install-app-deps
 |-----------|------|
 | `index.ts` | 应用生命周期管理：窗口创建、IPC 注册、macOS `activate` 行为 |
 | `ipc/*.ts` | IPC 事件注册。每个文件对应一个领域（project/git/ticket/version），将 IPC 事件映射到 Service 方法 |
-| `services/*.ts` | 业务逻辑与数据持久化。直接读写 `~/.branch-manager/` 下的 JSON 文件 |
+| `services/*.ts` | 业务逻辑与数据持久化。直接读写 `~/.dev-flow/` 下的 JSON 文件 |
 
 **持久化文件位置**（用户主目录下）：
 
-- `~/.branch-manager/projects.json` — 项目列表
-- `~/.branch-manager/tickets.json` — 需求列表
-- `~/.branch-manager/ticket-branches.json` — 需求与分支的关联关系
-- `~/.branch-manager/versions.json` — 版本列表
+- `~/.dev-flow/projects.json` — 项目列表
+- `~/.dev-flow/tickets.json` — 需求列表
+- `~/.dev-flow/ticket-branches.json` — 需求与分支的关联关系
+- `~/.dev-flow/versions.json` — 版本列表
 
 ### 渲染进程 (`src/renderer/`)
 
@@ -166,8 +166,8 @@ pnpm postinstall  # electron-builder install-app-deps
 |------|------|
 | `@renderer/*` | `apps/desktop/src/renderer/*` |
 | `@main/*` | `apps/desktop/src/main/*` |
-| `@branch-manager/git-core` | `packages/git-core/src/index.ts` |
-| `@branch-manager/shared` | `packages/shared/src/index.ts` |
+| `@dev-flow/git-core` | `packages/git-core/src/index.ts` |
+| `@dev-flow/shared` | `packages/shared/src/index.ts` |
 
 ### 命名与风格
 
@@ -246,7 +246,7 @@ pnpm postinstall  # electron-builder install-app-deps
 
 1. **修改 UI 文本时保持中文**：所有面向用户的提示、按钮、标题均为中文。
 2. **新增 IPC 通道需三处同步**：main 进程的 `ipcMain.handle`、preload 的 `api` 对象、shared 包的 `Repository` 接口及 `Electron*` 实现。
-3. **新增持久化数据**：参考现有 Service 模式，在 `~/.branch-manager/` 下新增 JSON 文件，使用 `fs.readFileSync`/`writeFileSync` + `JSON.parse`/`stringify`。
+3. **新增持久化数据**：参考现有 Service 模式，在 `~/.dev-flow/` 下新增 JSON 文件，使用 `fs.readFileSync`/`writeFileSync` + `JSON.parse`/`stringify`。
 4. **Git 操作在主进程**：渲染进程不应直接引入 `simple-git`，所有 Git 调用必须通过 IPC 落到 `GitService`。
 5. **路径别名在构建时解析**：`electron-vite.config.ts` 中定义了 `resolve.alias`，修改包位置需同步更新该配置。
 6. **无测试基线**：当前修改代码后，验证方式以 `pnpm typecheck` 和手动运行 `pnpm dev` 为主。

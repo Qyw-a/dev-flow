@@ -1,9 +1,9 @@
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { Version } from '@branch-manager/shared'
+import { Version } from '@dev-flow/shared'
 
-const CONFIG_DIR = path.join(os.homedir(), '.branch-manager')
+const CONFIG_DIR = path.join(os.homedir(), '.dev-flow')
 const VERSIONS_FILE = path.join(CONFIG_DIR, 'versions.json')
 
 function ensureConfigDir(): void {

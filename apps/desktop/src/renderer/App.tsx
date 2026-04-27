@@ -15,7 +15,7 @@ import { useBizProjects } from './hooks/useBizProjects'
 import { useStore } from './stores/useStore'
 import { useWorkflowConfigs } from './hooks/useWorkflowConfigs'
 import { useWorkflowActions } from './hooks/useWorkflowActions'
-import { Ticket } from '@branch-manager/shared'
+import { Ticket } from '@dev-flow/shared'
 
 const { Sider, Content } = Layout
 
@@ -30,7 +30,7 @@ const TicketView: React.FC = () => {
   const [versionModalOpen, setVersionModalOpen] = useState(false)
   const [bizProjectModalOpen, setBizProjectModalOpen] = useState(false)
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null)
-  const [editingVersion, setEditingVersion] = useState<import('@branch-manager/shared').Version | null>(null)
+  const [editingVersion, setEditingVersion] = useState<import('@dev-flow/shared').Version | null>(null)
   const [createTicketVersionId, setCreateTicketVersionId] = useState<string | undefined>(undefined)
   const [newBizProjectName, setNewBizProjectName] = useState('')
   const [newBizProjectDesc, setNewBizProjectDesc] = useState('')
@@ -116,7 +116,7 @@ const TicketView: React.FC = () => {
     setModalOpen(false)
   }
 
-  const handleVersionConfirm = async (values: Omit<import('@branch-manager/shared').Version, 'id' | 'createdAt'>) => {
+  const handleVersionConfirm = async (values: Omit<import('@dev-flow/shared').Version, 'id' | 'createdAt'>) => {
     try {
       if (editingVersion) {
         const updated = await updateVersion(editingVersion.id, values)

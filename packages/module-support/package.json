@@ -1,5 +1,5 @@
 {
-  "name": "@branch-manager/module-support",
+  "name": "@dev-flow/module-support",
   "version": "0.0.1",
   "description": "Third-party module system support",
   "private": true,

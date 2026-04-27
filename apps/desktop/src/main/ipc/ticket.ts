@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { TicketService } from '../services/TicketService'
-import { Ticket } from '@branch-manager/shared'
+import { Ticket } from '@dev-flow/shared'
 
 export function registerTicketIpc(): void {
   ipcMain.handle('ticket:list', () => {

@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useStore } from '../stores/useStore'
-import { repositories } from '@branch-manager/shared'
-import { WorkflowConfig, WorkflowStep } from '@branch-manager/shared'
+import { repositories } from '@dev-flow/shared'
+import { WorkflowConfig, WorkflowStep } from '@dev-flow/shared'
 
 export function useWorkflowConfigs() {
   const { workflowConfigs, setWorkflowConfigs } = useStore()

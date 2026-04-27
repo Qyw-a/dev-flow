@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Modal, Input, Select, message, Divider, Empty } from 'antd'
-import { Ticket, TicketPriority, BizProject, Project } from '@branch-manager/shared'
+import { Ticket, TicketPriority, BizProject, Project } from '@dev-flow/shared'
 import { useWorkflowConfigs } from '../hooks/useWorkflowConfigs'
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
   bizProjectId: string
   defaultVersionId?: string
   bizProjects: BizProject[]
-  versions: import('@branch-manager/shared').Version[]
+  versions: import('@dev-flow/shared').Version[]
   projects: Project[]
   onCancel: () => void
   onConfirm: (values: Omit<Ticket, 'id' | 'createdAt'>) => void

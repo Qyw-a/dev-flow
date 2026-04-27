@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useStore } from '../stores/useStore'
-import { repositories } from '@branch-manager/shared'
-import { Ticket } from '@branch-manager/shared'
+import { repositories } from '@dev-flow/shared'
+import { Ticket } from '@dev-flow/shared'
 
 export function useTickets() {
   const { tickets, setTickets, setTicketBranches } = useStore()

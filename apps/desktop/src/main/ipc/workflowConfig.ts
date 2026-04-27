@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { WorkflowConfigService } from '../services/WorkflowConfigService'
-import { WorkflowConfig } from '@branch-manager/shared'
+import { WorkflowConfig } from '@dev-flow/shared'
 
 export function registerWorkflowConfigIpc(): void {
   ipcMain.handle('workflowConfig:list', () => {

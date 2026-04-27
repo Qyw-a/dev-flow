@@ -1,9 +1,9 @@
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { BizProject } from '@branch-manager/shared'
+import { BizProject } from '@dev-flow/shared'
 
-const CONFIG_DIR = path.join(os.homedir(), '.branch-manager')
+const CONFIG_DIR = path.join(os.homedir(), '.dev-flow')
 const BIZ_PROJECTS_FILE = path.join(CONFIG_DIR, 'biz-projects.json')
 
 function ensureConfigDir(): void {

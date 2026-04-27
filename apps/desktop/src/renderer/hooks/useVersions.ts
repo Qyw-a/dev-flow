@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useStore } from '../stores/useStore'
-import { repositories } from '@branch-manager/shared'
-import { Version } from '@branch-manager/shared'
+import { repositories } from '@dev-flow/shared'
+import { Version } from '@dev-flow/shared'
 
 export function useVersions() {
   const { versions, setVersions } = useStore()

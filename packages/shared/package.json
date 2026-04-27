@@ -1,5 +1,5 @@
 {
-  "name": "@branch-manager/shared",
+  "name": "@dev-flow/shared",
   "version": "1.0.0",
   "description": "Shared types and utilities",
   "private": true,

@@ -1,5 +1,5 @@
 {
-  "name": "@branch-manager/git-core",
+  "name": "@dev-flow/git-core",
   "version": "1.0.0",
   "description": "Git operations core package",
   "private": true,

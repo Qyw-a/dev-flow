@@ -1,5 +1,5 @@
 import { GitRepository } from '../types'
-import { BranchInfo, GitResult, BatchOp } from '@branch-manager/git-core'
+import { BranchInfo, GitResult, BatchOp } from '@dev-flow/git-core'
 
 export class ElectronGitRepository implements GitRepository {
   async branches(projectId: string): Promise<BranchInfo[]> {

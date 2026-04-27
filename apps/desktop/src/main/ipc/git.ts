@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { GitService, BatchOp } from '@branch-manager/git-core'
+import { GitService, BatchOp } from '@dev-flow/git-core'
 import { ProjectService } from '../services/ProjectService'
 
 export function registerGitIpc(): void {

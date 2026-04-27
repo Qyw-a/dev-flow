@@ -1,5 +1,5 @@
 import { Project, Ticket, TicketBranchLink, Version, BizProject, WorkflowConfig } from '../types'
-import { BranchInfo, GitResult, BatchOp } from '@branch-manager/git-core'
+import { BranchInfo, GitResult, BatchOp } from '@dev-flow/git-core'
 
 export interface ProjectRepository {
   list(): Promise<Project[]>

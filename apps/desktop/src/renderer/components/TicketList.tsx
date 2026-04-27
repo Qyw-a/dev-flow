@@ -17,7 +17,7 @@ import { useStore } from '../stores/useStore'
 import { useTickets } from '../hooks/useTickets'
 import { useVersions } from '../hooks/useVersions'
 import { useWorkflowConfigs } from '../hooks/useWorkflowConfigs'
-import { Ticket } from '@branch-manager/shared'
+import { Ticket } from '@dev-flow/shared'
 
 interface TicketListProps {
   onCreateBizProject: () => void

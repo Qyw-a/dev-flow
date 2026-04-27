@@ -18,8 +18,8 @@
     "paths": {
       "@renderer/*": ["src/renderer/*"],
       "@main/*": ["src/main/*"],
-      "@branch-manager/git-core": ["../../packages/git-core/src/index.ts"],
-      "@branch-manager/shared": ["../../packages/shared/src/index.ts"]
+      "@dev-flow/git-core": ["../../packages/git-core/src/index.ts"],
+      "@dev-flow/shared": ["../../packages/shared/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]

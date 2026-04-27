@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
 import { useStore } from '../stores/useStore'
 import { useGitOps } from './useGitOps'
-import { repositories } from '@branch-manager/shared'
-import { Ticket, WorkflowStep, BizProject } from '@branch-manager/shared'
+import { repositories } from '@dev-flow/shared'
+import { Ticket, WorkflowStep, BizProject } from '@dev-flow/shared'
 import { LogEntry } from '../types'
 
 export function useWorkflowActions() {
