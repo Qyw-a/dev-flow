@@ -20,5 +20,8 @@
       "electron-builder",
       "esbuild"
     ]
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }

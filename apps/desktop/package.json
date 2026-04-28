@@ -10,10 +10,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "preview": "electron-vite preview",
     "postinstall": "electron-builder install-app-deps",
-    "dist": "npm run build && electron-builder",
-    "dist:mac": "npm run build && electron-builder --mac",
-    "dist:win": "npm run build && electron-builder --win",
-    "dist:linux": "npm run build && electron-builder --linux"
+    "dist": "npm run build && cross-env ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ electron-builder",
+    "dist:mac": "npm run build && cross-env ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ electron-builder --mac",
+    "dist:win": "npm run build && cross-env ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ electron-builder --win",
+    "dist:linux": "npm run build && cross-env ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ electron-builder --linux"
   },
   "dependencies": {
     "@dev-flow/git-core": "workspace:*",
